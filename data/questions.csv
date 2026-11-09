@@ -1,0 +1,31 @@
+id,difficulty,topic,question,answer1,answer2,answer3,answer4,correct
+1,EASY,Agile,What is a sprint in Scrum?,"A short, fixed work period",A long project plan,A bug report,A type of test,1
+2,EASY,Agile,Who sets the order of the product backlog?,The Scrum Master,The Product Owner,The tester,The client's lawyer,2
+3,EASY,MVC,"In MVC, which part shows data to the user?",Model,Controller,View,Database,3
+4,EASY,MVC,"In MVC, which part holds the game data and rules?",View,Model,Controller,CSS,2
+5,EASY,QA,What does a unit test check?,The whole system,One small part of the code,The user's computer,The network speed,2
+6,EASY,QA,What is a bug?,A new feature,A wrong behaviour of the software,A design pattern,A meeting,2
+7,EASY,Design Patterns,Which pattern makes sure a class has only one object?,Observer,Factory,Singleton,Adapter,3
+8,EASY,Agile,What is a user story?,A short need written from the user's view,A test report,A class diagram,A server log,1
+9,EASY,QA,What does QA stand for?,Quick Answer,Quality Assurance,Question Archive,Quality Average,2
+10,EASY,Agile,What happens in a daily stand-up?,The team plans the whole year,Each member shares progress and blockers,The client tests the product,Code is deployed,2
+11,MEDIUM,MVC,"In MVC, what does the Controller do?",Draws the screen,Stores files,Handles user input and updates the Model,Tests the code,3
+12,MEDIUM,Design Patterns,Which pattern lets the View update when the Model changes?,Observer,Singleton,Builder,Proxy,1
+13,MEDIUM,Design Patterns,Which pattern creates objects without naming their exact class?,Facade,Factory Method,Decorator,Iterator,2
+14,MEDIUM,QA,What is regression testing?,Testing old features again after a change,Testing only new code,Testing on paper,Testing the hardware,1
+15,MEDIUM,Agile,What is the goal of a sprint retrospective?,To demo the product,To improve how the team works,To write the SRS,To fix all bugs,2
+16,MEDIUM,QA,What is the difference between verification and validation?,They are the same,Verification: built right; Validation: right product,Verification is only for UI,Validation is done before coding only,2
+17,MEDIUM,Agile,What is velocity in Scrum?,Speed of the computer,Work the team finishes in a sprint,Number of bugs,Number of meetings,2
+18,MEDIUM,Design Patterns,Which pattern gives a simple interface to a complex subsystem?,Facade,Observer,State,Composite,1
+19,MEDIUM,MVC,Why do we separate Model and View?,To make the app slower,So we can change the UI without changing logic,Because Java needs it,To save disk space,2
+20,MEDIUM,QA,What is an acceptance test?,A test the developer runs on one method,A test that checks the product meets user needs,A speed test,A security scan,2
+21,HARD,Design Patterns,"Which pattern fits changing a piece's behaviour by its state (castle, board, home)?",State,Adapter,Prototype,Bridge,1
+22,HARD,Design Patterns,Which pattern lets you add features to an object without changing its class?,Decorator,Singleton,Factory,Memento,1
+23,HARD,QA,"In black-box testing, what do testers use to design tests?",The source code,The requirements and inputs/outputs,The compiler,The database schema only,2
+24,HARD,QA,Boundary value analysis for names of 1–15 characters tests which lengths?,Only 8,"0, 1, 15, 16",1 and 100,Only 15,2
+25,HARD,Agile,What is the Definition of Done?,A list of rules a task must meet to be finished,The final exam,The last sprint,A bug list,1
+26,HARD,MVC,Where should the rule 'a piece enters only on a 6' live in MVC?,View,Model,CSS file,Main method only,2
+27,HARD,Design Patterns,"Which pattern lets the dice type (Normal, Boost, UltraBoost) be swapped at runtime?",Strategy,Singleton,Observer,Facade,1
+28,HARD,QA,What does code coverage measure?,How fast code runs,How much code is run by tests,How many users the app has,How many classes exist,2
+29,HARD,Agile,What is technical debt?,Money owed to the client,"Extra future work caused by quick, poor solutions",A licence cost,Unpaid salaries,2
+30,HARD,Design Patterns,"Which pattern saves and restores an object's state (for example, undo)?",Memento,Adapter,Composite,Proxy,1
