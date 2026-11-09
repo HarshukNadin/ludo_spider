@@ -11,24 +11,24 @@ Educational Ludo game for 2–4 players, written in Java (Swing). Group **spider
 ## Structure
 
 ```
-src/spider/ludo/
+src/
   Main.java
-  model/       game logic and CSV files
-  view/        MainFrame, MainMenuView, SetupView, GameView, BoardPanel, HistoryView
-  controller/  AppController, SetupController, GameController, HistoryController
-test/          JUnit 5 tests for the model
+  Model/       game logic and CSV files
+  View/        MainFrame, MainMenuView, SetupView, GameView, BoardPanel, HistoryView
+  Controller/  AppController, SetupController, GameController, HistoryController
+test/Model/    JUnit 5 tests for the model
 data/          questions.csv (30 questions), game_history.csv (course format)
 ```
 
 ## Run
 
-Eclipse: File > Import > Existing folder as Java project (or new Java project pointing at this folder), mark `src` and `test` as source folders, add JUnit 5 to the build path, run `spider.ludo.Main`. The working directory must be the project folder so `data/` is found.
+Eclipse: File > Import > Existing folder as Java project (or new Java project pointing at this folder), mark `src` and `test` as source folders, add JUnit 5 to the build path, run `Main`. The working directory must be the project folder so `data/` is found.
 
 Command line:
 
 ```bash
 javac -d out $(find src -name '*.java')
-java -cp out spider.ludo.Main
+java -cp out Main
 ```
 
 ## Next steps
