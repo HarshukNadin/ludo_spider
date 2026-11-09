@@ -13,6 +13,7 @@ public class MainFrame extends JFrame {
     public MainFrame() {
         super("Spider Ludo");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
+        root.setBackground(Theme.INK);
         setContentPane(root);
         setMinimumSize(new Dimension(1000, 720));
         setLocationRelativeTo(null);
