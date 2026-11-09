@@ -36,6 +36,15 @@ public class Game {
     private Question pendingQuestion;
     private Piece questionPiece;
 
+    /**
+     * Starts a new game. Every player's pieces begin in their castle and the first player rolls first.
+     *
+     * @param difficulty   Easy, Medium or Hard
+     * @param players      2 to 4 players with different names and colors
+     * @param questionBank questions for Question squares, or null for no questions (tests)
+     * @param random       source of randomness for the board and the dice
+     * @throws IllegalArgumentException if the players are not valid
+     */
     public Game(Difficulty difficulty, List<Player> players, QuestionBank questionBank, Random random) {
         validatePlayers(players);
         this.difficulty = difficulty;
@@ -47,6 +56,12 @@ public class Game {
         if (questionBank != null) questionBank.resetUsed();
     }
 
+    /**
+     * Checks the player list: 2 to 4 players, no repeated color, no repeated name (case is ignored).
+     *
+     * @param players the players of a new game
+     * @throws IllegalArgumentException with a message saying what is wrong
+     */
     public static void validatePlayers(List<Player> players) {
         if (players.size() < MIN_PLAYERS || players.size() > MAX_PLAYERS)
             throw new IllegalArgumentException("A game needs 2 to 4 players");
@@ -58,6 +73,7 @@ public class Game {
     }
 
     // ---------- Observer ----------
+    /** @param l called after every change of the game state */
     public void addListener(GameListener l) { listeners.add(l); }
     private void fire(String message) { for (GameListener l : listeners) l.gameChanged(this, message); }
 
@@ -75,6 +91,11 @@ public class Game {
     public Duration getDuration() { return Duration.between(startedAt, endedAt != null ? endedAt : LocalDateTime.now()); }
 
     // ---------- Turn flow ----------
+    /**
+     * Rolls the dice for the current player.
+     *
+     * @throws IllegalStateException if the game is not waiting for a roll
+     */
     public void roll() {
         roll(dice.roll(difficulty, ultraBoostNext));
     }
@@ -116,6 +137,13 @@ public class Game {
         }
     }
 
+    /**
+     * Moves one of the current player's pieces by the last roll.
+     *
+     * @param piece a piece from {@link #legalMoves()}
+     * @throws IllegalStateException    if the game is not waiting for a piece choice
+     * @throws IllegalArgumentException if the piece is not the current player's or cannot move
+     */
     public void move(Piece piece) {
         requirePhase(GamePhase.CHOOSING_PIECE);
         if (piece.getOwner() != getCurrentPlayer()) throw new IllegalArgumentException("Not your piece");
@@ -127,6 +155,12 @@ public class Game {
         applySquare(piece, msg);
     }
 
+    /**
+     * Answers the pending question and moves the piece forward or back by the difficulty's steps.
+     *
+     * @param answer the chosen answer, 1 to 4
+     * @throws IllegalStateException if no question is waiting for an answer
+     */
     public void answerQuestion(int answer) {
         requirePhase(GamePhase.ANSWERING_QUESTION);
         int steps = difficulty.getQuestionSteps();

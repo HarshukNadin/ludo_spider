@@ -8,18 +8,32 @@ public class Piece {
     private final int number;
     private int progress = IN_CASTLE;
 
+    /**
+     * New pieces start in the castle.
+     *
+     * @param owner  the player this piece belongs to
+     * @param number 1 to 4
+     */
     public Piece(Player owner, int number) {
         this.owner = owner;
         this.number = number;
     }
 
+    /** @return the player this piece belongs to */
     public Player getOwner() { return owner; }
-    /** 1 to 4. */
+
+    /** @return the piece number, 1 to 4 */
     public int getNumber() { return number; }
+
+    /**
+     * @return steps from the start square along this color's route, or {@link #IN_CASTLE}.
+     *         0 is the start square and {@link Board#FINAL_INDEX} is the Final Home.
+     */
     public int getProgress() { return progress; }
     void setProgress(int progress) { this.progress = progress; }
     void sendToCastle() { progress = IN_CASTLE; }
 
+    /** @return where the piece is: castle, shared track, home path or finished */
     public PieceState getState() {
         if (progress == IN_CASTLE) return PieceState.IN_CASTLE;
         if (progress == Board.FINAL_INDEX) return PieceState.FINISHED;
@@ -27,6 +41,6 @@ public class Piece {
         return PieceState.ON_TRACK;
     }
 
-    /** Shared-track index, or -1 when in the castle, home path or finished. */
+    /** @return the index on the shared track, or -1 when in the castle, home path or finished */
     public int getTrackIndex() { return Board.toTrackIndex(owner.getColor(), progress); }
 }
