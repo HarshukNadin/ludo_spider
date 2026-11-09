@@ -24,12 +24,15 @@ data/          questions.csv (30 questions), game_history.csv (course format)
 
 Eclipse: File > Import > Existing folder as Java project (or new Java project pointing at this folder), mark `src` and `test` as source folders, add JUnit 5 to the build path, run `Main`. The working directory must be the project folder so `data/` is found.
 
-Command line:
+Runnable jar (Java 17 or newer):
 
 ```bash
-javac -d out $(find src -name '*.java')
-java -cp out Main
+./build.sh        # macOS / Linux
+build.bat         # Windows
+java -jar spider_ludo.jar
 ```
+
+Keep the `data/` folder next to the jar. The game also finds it when the jar is opened by double click.
 
 ## Next steps
 
