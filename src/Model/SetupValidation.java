@@ -16,6 +16,7 @@ public class SetupValidation {
     private static final Pattern NAME_CHARS = Pattern.compile("[\\p{L}\\p{N} _-]+");
 
     private final String[] nameErrors = new String[Game.MAX_PLAYERS];
+    private final String[] colorErrors = new String[Game.MAX_PLAYERS];
     private String playerCountError;
     private String difficultyError;
 
@@ -25,13 +26,28 @@ public class SetupValidation {
      * @param playerCount how many people will play, or null if not chosen yet
      * @param difficulty  the chosen difficulty, or null if not chosen yet
      * @param names       the names typed for each player (only the first playerCount are checked)
+     * @param colors      the color picked by each player, null where none is picked
      */
-    public SetupValidation(Integer playerCount, Difficulty difficulty, List<String> names) {
+    public SetupValidation(Integer playerCount, Difficulty difficulty, List<String> names, List<PlayerColor> colors) {
         if (playerCount == null) playerCountError = "Choose how many people will play.";
         else if (playerCount < Game.MIN_PLAYERS || playerCount > Game.MAX_PLAYERS)
             playerCountError = "A game needs 2 to 4 players.";
         if (difficulty == null) difficultyError = "Choose Easy, Medium or Hard.";
-        if (playerCount != null && playerCountError == null) checkNames(names.subList(0, playerCount));
+        if (playerCount != null && playerCountError == null) {
+            checkNames(names.subList(0, playerCount));
+            checkColors(colors.subList(0, playerCount));
+        }
+    }
+
+    private void checkColors(List<PlayerColor> colors) {
+        for (int i = 0; i < colors.size(); i++) {
+            PlayerColor c = colors.get(i);
+            if (c == null) colorErrors[i] = "Pick a color.";
+            else {
+                int owner = colors.subList(0, i).indexOf(c);
+                if (owner >= 0) colorErrors[i] = "Player " + (owner + 1) + " has this color. Pick another one.";
+            }
+        }
     }
 
     private void checkNames(List<String> names) {
@@ -70,8 +86,15 @@ public class SetupValidation {
      */
     public String getNameError(int player) { return nameErrors[player]; }
 
+    /**
+     * @param player 0 to 3
+     * @return the problem with that player's color, or null
+     */
+    public String getColorError(int player) { return colorErrors[player]; }
+
     /** @return true when the game can start */
     public boolean isValid() {
-        return playerCountError == null && difficultyError == null && Arrays.stream(nameErrors).allMatch(e -> e == null);
+        return playerCountError == null && difficultyError == null && Arrays.stream(nameErrors).allMatch(e -> e == null)
+                && Arrays.stream(colorErrors).allMatch(e -> e == null);
     }
 }
