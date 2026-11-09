@@ -4,7 +4,7 @@ import java.nio.file.Path;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
-import controller.AppController;
+import Controller.AppController;
 
 /** Starts Spider Ludo. Data files are read from the "data" folder next to where the app runs. */
 public class Main {
