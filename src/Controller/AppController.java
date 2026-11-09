@@ -18,6 +18,7 @@ public class AppController {
     public static final String MENU = "menu", SETUP = "setup", GAME = "game", HISTORY = "history";
 
     private final MainFrame frame = new MainFrame();
+    private final MainMenuView menu;
     private final QuestionBank questionBank;
     private final GameHistory history;
     private final SetupController setupController;
@@ -33,7 +34,7 @@ public class AppController {
             JOptionPane.showMessageDialog(null, "Could not load the question bank: " + e.getMessage());
         }
 
-        MainMenuView menu = new MainMenuView();
+        menu = new MainMenuView();
         SetupView setupView = new SetupView();
         GameView gameView = new GameView();
         HistoryView historyView = new HistoryView();
@@ -48,17 +49,20 @@ public class AppController {
 
         menu.onNewGame(e -> showSetup());
         menu.onHistory(e -> showHistory());
+        menu.onQuestions(e -> JOptionPane.showMessageDialog(frame,
+                "Question management needs the administrator login, which comes in Iteration 3.",
+                "Question management", JOptionPane.INFORMATION_MESSAGE));
         menu.onExit(e -> System.exit(0));
     }
 
     public void start() {
-        frame.showScreen(MENU);
         frame.setVisible(true);
+        showMenu();
     }
 
     public QuestionBank getQuestionBank() { return questionBank; }
 
-    public void showMenu() { frame.showScreen(MENU); }
+    public void showMenu() { frame.showScreen(MENU); menu.focusFirst(); }
     public void showSetup() { setupController.open(); frame.showScreen(SETUP); }
     public void showHistory() { historyController.open(); frame.showScreen(HISTORY); }
     public void startGame(Game game) { gameController.open(game); frame.showScreen(GAME); }
