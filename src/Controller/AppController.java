@@ -11,11 +11,12 @@ import View.GameView;
 import View.HistoryView;
 import View.MainFrame;
 import View.MainMenuView;
+import View.RulesView;
 import View.SetupView;
 
 /** Creates the screens and moves between them. Owns the shared data (question bank and history). */
 public class AppController {
-    public static final String MENU = "menu", SETUP = "setup", GAME = "game", HISTORY = "history";
+    public static final String MENU = "menu", SETUP = "setup", GAME = "game", HISTORY = "history", RULES = "rules";
 
     private final MainFrame frame = new MainFrame();
     private final MainMenuView menu;
@@ -38,10 +39,12 @@ public class AppController {
         SetupView setupView = new SetupView();
         GameView gameView = new GameView();
         HistoryView historyView = new HistoryView();
+        RulesView rulesView = new RulesView();
         frame.addScreen(MENU, menu);
         frame.addScreen(SETUP, setupView);
         frame.addScreen(GAME, gameView);
         frame.addScreen(HISTORY, historyView);
+        frame.addScreen(RULES, rulesView);
 
         setupController = new SetupController(this, setupView);
         gameController = new GameController(this, gameView, history);
@@ -49,6 +52,8 @@ public class AppController {
 
         menu.onNewGame(e -> showSetup());
         menu.onHistory(e -> showHistory());
+        menu.onRules(e -> frame.showScreen(RULES));
+        rulesView.onBack(e -> showMenu());
         menu.onQuestions(e -> JOptionPane.showMessageDialog(frame,
                 "Question management needs the administrator login, which comes in Iteration 3.",
                 "Question management", JOptionPane.INFORMATION_MESSAGE));
