@@ -22,6 +22,7 @@ final class Colors {
         return switch (t) {
             case NORMAL -> Color.WHITE;
             case START -> new Color(220, 220, 220);
+            case ARROW -> new Color(235, 235, 235);
             case PROTECTION -> new Color(170, 210, 240);
             case QUESTION -> new Color(250, 225, 140);
             case SURPRISE -> new Color(215, 175, 240);

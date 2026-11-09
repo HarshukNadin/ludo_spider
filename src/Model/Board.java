@@ -22,7 +22,10 @@ public class Board {
     public Board(Difficulty difficulty, Random random) {
         this.difficulty = difficulty;
         for (int i = 0; i < TRACK_LENGTH; i++) track.add(new Square(i, SquareType.NORMAL));
-        for (PlayerColor c : PlayerColor.values()) track.get(c.getStartSquare()).setType(SquareType.START);
+        for (PlayerColor c : PlayerColor.values()) {
+            track.get(c.getStartSquare()).setType(SquareType.START);
+            track.get(arrowSquare(c)).setType(SquareType.ARROW);
+        }
         placeSpecialSquares(random);
     }
 
@@ -39,6 +42,11 @@ public class Board {
     public Difficulty getDifficulty() { return difficulty; }
     public List<Square> getTrack() { return Collections.unmodifiableList(track); }
     public Square getSquare(int trackIndex) { return track.get(trackIndex); }
+
+    /** Fixed arrow square of a color: the last shared square before its home path (FR-2.06). */
+    public static int arrowSquare(PlayerColor color) {
+        return toTrackIndex(color, TRACK_LENGTH - 2);
+    }
 
     /** Converts a piece's progress on its own route to a shared-track index, or -1 if not on the shared track. */
     public static int toTrackIndex(PlayerColor color, int progress) {
