@@ -100,7 +100,13 @@ public class Game {
         roll(dice.roll(difficulty, ultraBoostNext));
     }
 
-    /** Uses a given roll; public so tests can control the dice. */
+    /**
+     * Uses a given roll for the current player; public so tests can control the dice.
+     * Only the active player can roll, because the game always rolls for {@link #getCurrentPlayer()} (FR-3.01).
+     *
+     * @param result the dice values
+     * @throws IllegalStateException if the game is not waiting for a roll
+     */
     public void roll(DiceResult result) {
         requirePhase(GamePhase.WAITING_FOR_ROLL);
         ultraBoostNext = false;
@@ -146,9 +152,11 @@ public class Game {
      */
     public void move(Piece piece) {
         requirePhase(GamePhase.CHOOSING_PIECE);
-        if (piece.getOwner() != getCurrentPlayer()) throw new IllegalArgumentException("Not your piece");
+        Player p = getCurrentPlayer();
+        if (piece.getOwner() != p)
+            throw new IllegalArgumentException("It is " + p.getName() + "'s turn. Move one of " + p.getName() + "'s pieces.");
         Integer to = targetOf(piece);
-        if (to == null) throw new IllegalArgumentException("This piece cannot move");
+        if (to == null) throw new IllegalArgumentException("Piece " + piece.getNumber() + " cannot move with this roll. Pick a glowing piece.");
         piece.setProgress(to);
         StringBuilder msg = new StringBuilder(piece.getOwner().getName() + " moved piece " + piece.getNumber() + ".");
         captureAt(piece, msg);
@@ -283,6 +291,12 @@ public class Game {
     }
 
     private void requirePhase(GamePhase expected) {
-        if (phase != expected) throw new IllegalStateException("Expected " + expected + " but game is in " + phase);
+        if (phase == expected) return;
+        throw new IllegalStateException(switch (phase) {
+            case WAITING_FOR_ROLL -> getCurrentPlayer().getName() + " has to roll the dice first.";
+            case CHOOSING_PIECE -> getCurrentPlayer().getName() + " has to choose a piece to move first.";
+            case ANSWERING_QUESTION -> "Answer the question first.";
+            case GAME_OVER -> "The game is over. Start a new game from the menu.";
+        });
     }
 }
