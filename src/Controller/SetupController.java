@@ -38,22 +38,24 @@ public class SetupController {
         }
         Integer count = view.getPlayerCount();
         SetupValidation check = new SetupValidation(count, view.getDifficulty(), names, colors);
+        showProblems(check);
         if (!check.isValid()) {
-            view.showError(firstProblem(check, count));
+            view.showError("Fix the fields marked in red to start the game.");
             return;
         }
+        view.showError(" ");
         List<Player> players = new ArrayList<>();
         for (int i = 0; i < count; i++) players.add(new Player(names.get(i), colors.get(i)));
         app.startGame(new Game(view.getDifficulty(), players, app.getQuestionBank(), new SecureRandom()));
     }
 
-    private static String firstProblem(SetupValidation check, Integer count) {
-        if (check.getPlayerCountError() != null) return check.getPlayerCountError();
-        if (check.getDifficultyError() != null) return check.getDifficultyError();
-        for (int i = 0; i < count; i++) {
-            if (check.getNameError(i) != null) return "Player " + (i + 1) + ": " + check.getNameError(i);
-            if (check.getColorError(i) != null) return "Player " + (i + 1) + ": " + check.getColorError(i);
+    /** Puts each message from the check under its own field; fields without a problem are cleared. */
+    private void showProblems(SetupValidation check) {
+        view.showCountError(check.getPlayerCountError());
+        view.showDifficultyError(check.getDifficultyError());
+        for (int i = 0; i < Game.MAX_PLAYERS; i++) {
+            view.showNameError(i, check.getNameError(i));
+            view.showColorError(i, check.getColorError(i));
         }
-        return " ";
     }
 }

@@ -11,6 +11,7 @@ import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.LayoutManager;
+import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -26,9 +27,14 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.plaf.basic.BasicScrollBarUI;
 
 import Model.Difficulty;
 import Model.Game;
+import Model.Player;
 import Model.PlayerColor;
 
 /**
@@ -50,6 +56,11 @@ public class SetupView extends JPanel {
     private final List<JTextField> names = new ArrayList<>();
     private final List<List<ColorSwatch>> swatches = new ArrayList<>();
     private final List<ButtonGroup> colorGroups = new ArrayList<>();
+    final JLabel countError = errorLabel();
+    final JLabel difficultyError = errorLabel();
+    final List<JLabel> nameErrors = new ArrayList<>();
+    final List<JLabel> colorErrors = new ArrayList<>();
+    final List<JLabel> counters = new ArrayList<>();
     private final JLabel playersHint = Theme.label("Choose the number of players first.", Theme.BODY, Theme.MUTED);
 
     private final JLabel summaryPlayers = Theme.label("", Theme.BODY, Theme.TEXT);
@@ -88,13 +99,17 @@ public class SetupView extends JPanel {
             t.setVerticalAlignment(SwingConstants.CENTER);
             t.setPreferredSize(new Dimension(72, 52));
             t.getAccessibleContext().setAccessibleName(COUNTS[i] + " players");
-            t.addActionListener(e -> updatePlayers());
+            t.addActionListener(e -> {
+                fieldChanged(countError);
+                updatePlayers();
+            });
             countGroup.add(t);
             countTiles[i] = t;
             countRow.add(t);
             countRow.add(Box.createHorizontalStrut(10));
         }
         steps.add(indent(countRow));
+        steps.add(indent(countError));
         steps.add(Box.createVerticalStrut(28));
 
         steps.add(step(2, "Choose difficulty"));
@@ -102,13 +117,17 @@ public class SetupView extends JPanel {
         for (Difficulty d : Difficulty.values()) {
             ChoiceTile t = new ChoiceTile(describe(d));
             t.getAccessibleContext().setAccessibleName(title(d));
-            t.addActionListener(e -> updateSummary());
+            t.addActionListener(e -> {
+                fieldChanged(difficultyError);
+                updateSummary();
+            });
             difficultyGroup.add(t);
             difficultyTiles[d.ordinal()] = t;
             diffRow.add(t);
         }
         diffRow.setMaximumSize(new Dimension(760, 130));
         steps.add(indent(diffRow));
+        steps.add(indent(difficultyError));
         steps.add(Box.createVerticalStrut(28));
 
         steps.add(step(3, "Who is playing?"));
@@ -126,6 +145,27 @@ public class SetupView extends JPanel {
         scroll.setOpaque(false);
         scroll.getViewport().setOpaque(false);
         scroll.getVerticalScrollBar().setUnitIncrement(16);
+        scroll.getVerticalScrollBar().setOpaque(false);
+        scroll.getVerticalScrollBar().setPreferredSize(new Dimension(10, 0));
+        scroll.getVerticalScrollBar().setUI(new BasicScrollBarUI() {
+            @Override
+            protected void configureScrollBarColors() {
+                thumbColor = Theme.LINE;
+                trackColor = Theme.INK;
+            }
+
+            @Override
+            protected JButton createDecreaseButton(int orientation) { return noButton(); }
+
+            @Override
+            protected JButton createIncreaseButton(int orientation) { return noButton(); }
+
+            private JButton noButton() {
+                JButton b = new JButton();
+                b.setPreferredSize(new Dimension(0, 0));
+                return b;
+            }
+        });
         add(scroll, BorderLayout.CENTER);
         add(summaryCard(), BorderLayout.EAST);
 
@@ -138,6 +178,7 @@ public class SetupView extends JPanel {
         GridBagConstraints c = new GridBagConstraints();
         c.anchor = GridBagConstraints.WEST;
         c.insets = new Insets(0, 0, 0, 14);
+        c.gridy = 0;
 
         JLabel label = Theme.label("Player " + (i + 1), Theme.BODY_BOLD, Theme.MUTED);
         label.setPreferredSize(new Dimension(80, 24));
@@ -155,21 +196,50 @@ public class SetupView extends JPanel {
         names.add(name);
         row.add(name, c);
 
+        JLabel counter = Theme.label("", Theme.SMALL, Theme.MUTED);
+        counter.setPreferredSize(new Dimension(44, 20));
+        counters.add(counter);
+        name.getDocument().addDocumentListener(onChange(() -> {
+            updateCounter(i);
+            fieldChanged(nameErrors.get(i));
+        }));
+        row.add(counter, c);
+
+        c.gridx = 3;
         ButtonGroup group = new ButtonGroup();
         List<ColorSwatch> own = new ArrayList<>();
         c.insets = new Insets(0, 0, 0, 4);
         for (PlayerColor pc : PlayerColor.values()) {
             ColorSwatch s = new ColorSwatch(pc);
-            s.addActionListener(e -> updateTakenColors());
+            s.addActionListener(e -> {
+                fieldChanged(colorErrors.get(i));
+                updateTakenColors();
+            });
             group.add(s);
             own.add(s);
             row.add(s, c);
+            c.gridx++;
         }
         c.weightx = 1;
         row.add(Box.createHorizontalGlue(), c);
+
+        // Second line: the message under the field it is about (EI-UI-4).
+        // Each message spans the whole line, so a long one does not push the swatches aside.
+        c.weightx = 0;
+        c.gridx = 1;
+        c.gridwidth = GridBagConstraints.REMAINDER;
+        c.insets = new Insets(0, 0, 0, 0);
+        c.gridy = 1;
+        JLabel nameError = errorLabel();
+        nameErrors.add(nameError);
+        row.add(nameError, c);
+        c.gridy = 2;
+        JLabel colorError = errorLabel();
+        colorErrors.add(colorError);
+        row.add(colorError, c);
         colorGroups.add(group);
         swatches.add(own);
-        row.setMaximumSize(new Dimension(660, 60));
+        row.setMaximumSize(new Dimension(760, 120));
         return row;
     }
 
@@ -275,6 +345,54 @@ public class SetupView extends JPanel {
                 + d.getProtectionSquares() + " protection squares</div></html>";
     }
 
+    /**
+     * Shows how many characters the name has out of the 15 allowed (FR-1.04).
+     * The counter turns red once the name is too long, before Start game is clicked.
+     */
+    private void updateCounter(int player) {
+        int length = getName(player).trim().length();
+        JLabel counter = counters.get(player);
+        counter.setText(length + "/" + Player.MAX_NAME_LENGTH);
+        counter.setForeground(length > Player.MAX_NAME_LENGTH ? Theme.ERROR : Theme.MUTED);
+    }
+
+    /**
+     * The player changed a field, so its old message no longer applies. Everything else the player
+     * typed or picked stays as it is. When no message is left, the hint above Start game goes too.
+     */
+    private void fieldChanged(JLabel error) {
+        show(error, null);
+        boolean anyLeft = countError.isVisible() || difficultyError.isVisible()
+                || nameErrors.stream().anyMatch(JLabel::isVisible) || colorErrors.stream().anyMatch(JLabel::isVisible);
+        if (!anyLeft) showError(" ");
+    }
+
+    private static DocumentListener onChange(Runnable r) {
+        return new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) { r.run(); }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) { r.run(); }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) { r.run(); }
+        };
+    }
+
+    private static JLabel errorLabel() {
+        JLabel l = Theme.label(" ", Theme.SMALL, Theme.ERROR);
+        l.setBorder(BorderFactory.createEmptyBorder(6, 0, 0, 0));
+        l.setVisible(false);
+        return l;
+    }
+
+    private static void show(JLabel label, String text) {
+        boolean on = text != null && !text.isBlank();
+        label.setText(on ? text : " ");
+        label.setVisible(on);
+    }
+
     private static JPanel step(int number, String text) {
         JPanel p = transparent(new FlowLayout(FlowLayout.LEFT, 0, 0));
         JLabel n = new JLabel(String.valueOf(number), SwingConstants.CENTER) {
@@ -322,7 +440,9 @@ public class SetupView extends JPanel {
         difficultyGroup.clearSelection();
         colorGroups.forEach(ButtonGroup::clearSelection);
         names.forEach(f -> f.setText(""));
+        for (int i = 0; i < counters.size(); i++) updateCounter(i);
         showError(" ");
+        clearFieldErrors();
         updatePlayers();
         scroll.getVerticalScrollBar().setValue(0);
     }
@@ -360,8 +480,50 @@ public class SetupView extends JPanel {
      * @param text what is wrong and how to fix it, or a blank string to clear it
      */
     public void showError(String text) {
-        message.setText("<html>" + text + "</html>");
+        message.setText("<html><body style='width:210px'>" + text + "</body></html>");
+        if (!text.isBlank()) SwingUtilities.invokeLater(this::revealFirstProblem);
     }
+
+    /** Scrolls the form so the first field with a message can be seen. */
+    private void revealFirstProblem() {
+        List<JLabel> order = new ArrayList<>(List.of(countError, difficultyError));
+        for (int i = 0; i < nameErrors.size(); i++) {
+            order.add(nameErrors.get(i));
+            order.add(colorErrors.get(i));
+        }
+        for (JLabel l : order) {
+            if (!l.isShowing()) continue;
+            JComponent target = (JComponent) l.getParent();
+            target.scrollRectToVisible(new Rectangle(0, l.getY() - 120, 1, l.getHeight() + 140));
+            return;
+        }
+    }
+
+    /** Hides every message under the fields. */
+    public void clearFieldErrors() {
+        show(countError, null);
+        show(difficultyError, null);
+        nameErrors.forEach(l -> show(l, null));
+        colorErrors.forEach(l -> show(l, null));
+    }
+
+    /** @param text the problem with the number of players, or null to hide it */
+    public void showCountError(String text) { show(countError, text); }
+
+    /** @param text the problem with the difficulty, or null to hide it */
+    public void showDifficultyError(String text) { show(difficultyError, text); }
+
+    /**
+     * @param player 0 to 3
+     * @param text   the problem with that player's name, or null to hide it
+     */
+    public void showNameError(int player, String text) { show(nameErrors.get(player), text); }
+
+    /**
+     * @param player 0 to 3
+     * @param text   the problem with that player's color, or null to hide it
+     */
+    public void showColorError(int player, String text) { show(colorErrors.get(player), text); }
 
     /** @param l runs when Start game is clicked */
     public void onStart(ActionListener l) { start.addActionListener(l); }
