@@ -10,6 +10,8 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.RenderingHints;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,12 +40,19 @@ public class BoardPanel extends JPanel {
     /** The shared track in walking order, starting one square before Red's start square. */
     private static final Point[] PATH = buildPath();
 
+    private static final Color STAR = new Color(0xD9A400);
+    private static final Color QUESTION = new Color(0xF0A020);
+    private static final Color SURPRISE = new Color(0x8E5BD0);
+
     private Game game;
+    /** Cell size and board origin from the last paint, used to find the square under the mouse. */
+    private int cellSize, originX, originY;
 
     /** Creates an empty board; it draws nothing until {@link #setGame} is called. */
     public BoardPanel() {
         setOpaque(false);
         setPreferredSize(new Dimension(620, 620));
+        setToolTipText("");
     }
 
     /**
@@ -109,6 +118,9 @@ public class BoardPanel extends JPanel {
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         int c = (Math.min(getWidth(), getHeight()) - 24) / N, s = c * N;
         int x0 = (getWidth() - s) / 2, y0 = (getHeight() - s) / 2;
+        cellSize = c;
+        originX = x0;
+        originY = y0;
         g.translate(x0, y0);
 
         g.setColor(new Color(0, 0, 0, 60));
@@ -132,6 +144,90 @@ public class BoardPanel extends JPanel {
         for (PlayerColor pc : PlayerColor.values())
             if (pc.getStartSquare() == sq.getIndex()) fill = Theme.mix(Colors.of(pc), Color.WHITE, 0.35f);
         cell(g, p, c, fill);
+        int x = p.x * c, y = p.y * c;
+        switch (sq.getType()) {
+            case PROTECTION -> star(g, x + c / 2, y + c / 2, c * 0.36);
+            case QUESTION -> badge(g, x, y, c, QUESTION, "?");
+            case SURPRISE -> gift(g, x, y, c);
+            case ARROW -> arrow(g, x, y, c, arrowOwner(sq.getIndex()));
+            default -> { }
+        }
+    }
+
+    private static PlayerColor arrowOwner(int trackIndex) {
+        for (PlayerColor pc : PlayerColor.values()) if (Board.arrowSquare(pc) == trackIndex) return pc;
+        return null;
+    }
+
+    private static void star(Graphics2D g, int cx, int cy, double r) {
+        Path2D.Double p = new Path2D.Double();
+        for (int i = 0; i < 10; i++) {
+            double a = Math.PI / 2 + i * Math.PI / 5, rr = i % 2 == 0 ? r : r * 0.45;
+            double px = cx + rr * Math.cos(a), py = cy - rr * Math.sin(a);
+            if (i == 0) p.moveTo(px, py); else p.lineTo(px, py);
+        }
+        p.closePath();
+        g.setColor(STAR);
+        g.fill(p);
+    }
+
+    private static void badge(Graphics2D g, int x, int y, int c, Color col, String text) {
+        int m = c / 5, w = c - 2 * m;
+        g.setColor(col);
+        g.fillRoundRect(x + m, y + m, w, w, c / 4, c / 4);
+        g.setColor(Color.WHITE);
+        g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, Math.max(10, w * 3 / 4)));
+        FontMetrics fm = g.getFontMetrics();
+        g.drawString(text, x + (c - fm.stringWidth(text)) / 2, y + (c + fm.getAscent()) / 2 - 2);
+    }
+
+    private static void gift(Graphics2D g, int x, int y, int c) {
+        int m = c / 4, w = c - 2 * m, lid = w / 3;
+        g.setColor(SURPRISE);
+        g.fillRect(x + m, y + m + lid / 2, w, w - lid / 2);
+        g.setColor(Theme.mix(SURPRISE, Color.WHITE, 0.25f));
+        g.fillRect(x + m - 2, y + m, w + 4, lid);
+        g.setColor(Color.WHITE);
+        g.fillRect(x + c / 2 - 1, y + m, 3, w);
+    }
+
+    private static void arrow(Graphics2D g, int x, int y, int c, PlayerColor owner) {
+        Point from = trackCell(Board.arrowSquare(owner)), to = homeCell(owner, 0);
+        double angle = Math.atan2(to.y - from.y, to.x - from.x);
+        Graphics2D a = (Graphics2D) g.create();
+        a.translate(x + c / 2.0, y + c / 2.0);
+        a.rotate(angle);
+        a.setColor(Colors.of(owner));
+        a.setStroke(new BasicStroke(Math.max(2f, c / 10f), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        int r = c * 3 / 10;
+        a.drawLine(-r, 0, r, 0);
+        a.drawLine(r, 0, r - r * 2 / 3, -r * 2 / 3);
+        a.drawLine(r, 0, r - r * 2 / 3, r * 2 / 3);
+        a.dispose();
+    }
+
+    /** Says what the square under the mouse does, so players can learn the marks while playing. */
+    @Override
+    public String getToolTipText(MouseEvent e) {
+        if (game == null || cellSize == 0) return null;
+        Point p = new Point(Math.floorDiv(e.getX() - originX, cellSize), Math.floorDiv(e.getY() - originY, cellSize));
+        for (Square sq : game.getBoard().getTrack()) {
+            if (!trackCell(sq.getIndex()).equals(p)) continue;
+            for (PlayerColor pc : PlayerColor.values())
+                if (pc.getStartSquare() == sq.getIndex()) return name(pc) + " start square. Pieces here are safe.";
+            return switch (sq.getType()) {
+                case PROTECTION -> "Protection square. Pieces here cannot be captured.";
+                case QUESTION -> "Question square. Answer right to move forward, wrong to move back.";
+                case SURPRISE -> "Surprise square. Something random happens.";
+                case ARROW -> name(arrowOwner(sq.getIndex())) + " turns into its home path after this square.";
+                default -> null;
+            };
+        }
+        return null;
+    }
+
+    private static String name(PlayerColor pc) {
+        return pc.name().charAt(0) + pc.name().substring(1).toLowerCase();
     }
 
     private static void cell(Graphics2D g, Point p, int c, Color fill) {
