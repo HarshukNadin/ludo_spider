@@ -1,8 +1,9 @@
 package View;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ActionListener;
 import java.util.List;
@@ -10,6 +11,7 @@ import java.util.function.IntConsumer;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -34,13 +36,22 @@ public class GameView extends JPanel {
 
     public GameView() {
         super(new BorderLayout(12, 12));
+        setBackground(Theme.INK);
         setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+        // The board takes all the height left, so it fits at 1280x720 without scrolling (EI-UI-2).
+        board.setPreferredSize(new Dimension(640, 640));
         add(board, BorderLayout.CENTER);
 
         JPanel side = new JPanel();
+        side.setOpaque(false);
         side.setLayout(new BoxLayout(side, BoxLayout.Y_AXIS));
         side.setPreferredSize(new Dimension(300, 0));
-        turn.setFont(turn.getFont().deriveFont(Font.BOLD, 18f));
+        turn.setFont(Theme.HEADING);
+        turn.setOpaque(true);
+        turn.setForeground(Color.WHITE);
+        turn.setBorder(BorderFactory.createEmptyBorder(10, 14, 10, 14));
+        turn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 48));
+        diceLabel.setForeground(Theme.TEXT);
         side.add(turn);
         side.add(diceLabel);
         side.add(roll);
@@ -49,13 +60,14 @@ public class GameView extends JPanel {
             pieceButtons[i] = new JButton(String.valueOf(i + 1));
             pieces.add(pieceButtons[i]);
         }
-        side.add(new JLabel("Move piece:"));
+        side.add(Theme.label("Move piece:", Theme.BODY, Theme.TEXT));
         side.add(pieces);
         log.setEditable(false);
         log.setLineWrap(true);
         log.setWrapStyleWord(true);
         side.add(new JScrollPane(log));
         side.add(quit);
+        for (Component part : side.getComponents()) ((JComponent) part).setAlignmentX(LEFT_ALIGNMENT);
         add(side, BorderLayout.EAST);
     }
 
@@ -64,7 +76,7 @@ public class GameView extends JPanel {
         board.setGame(game);
         Player p = game.getCurrentPlayer();
         turn.setText(game.getPhase() == GamePhase.GAME_OVER ? "Game over" : p.getName() + "'s turn");
-        turn.setForeground(Colors.of(p.getColor()));
+        turn.setBackground(game.getPhase() == GamePhase.GAME_OVER ? Theme.PANEL : Colors.of(p.getColor()));
         diceLabel.setText("Dice: " + (game.getLastRoll() == null ? "-" : game.getLastRoll()));
         roll.setEnabled(game.getPhase() == GamePhase.WAITING_FOR_ROLL);
         List<Piece> movable = game.getPhase() == GamePhase.CHOOSING_PIECE ? game.legalMoves() : List.of();
