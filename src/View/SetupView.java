@@ -28,10 +28,13 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 
 import Model.Difficulty;
 import Model.Game;
+import Model.Player;
 import Model.PlayerColor;
 
 /**
@@ -57,6 +60,7 @@ public class SetupView extends JPanel {
     final JLabel difficultyError = errorLabel();
     final List<JLabel> nameErrors = new ArrayList<>();
     final List<JLabel> colorErrors = new ArrayList<>();
+    final List<JLabel> counters = new ArrayList<>();
     private final JLabel playersHint = Theme.label("Choose the number of players first.", Theme.BODY, Theme.MUTED);
 
     private final JLabel summaryPlayers = Theme.label("", Theme.BODY, Theme.TEXT);
@@ -186,7 +190,13 @@ public class SetupView extends JPanel {
         names.add(name);
         row.add(name, c);
 
-        c.gridx = 2;
+        JLabel counter = Theme.label("", Theme.SMALL, Theme.MUTED);
+        counter.setPreferredSize(new Dimension(44, 20));
+        counters.add(counter);
+        name.getDocument().addDocumentListener(onChange(() -> updateCounter(i)));
+        row.add(counter, c);
+
+        c.gridx = 3;
         ButtonGroup group = new ButtonGroup();
         List<ColorSwatch> own = new ArrayList<>();
         c.insets = new Insets(0, 0, 0, 4);
@@ -323,6 +333,30 @@ public class SetupView extends JPanel {
                 + d.getProtectionSquares() + " protection squares</div></html>";
     }
 
+    /**
+     * Shows how many characters the name has out of the 15 allowed (FR-1.04).
+     * The counter turns red once the name is too long, before Start game is clicked.
+     */
+    private void updateCounter(int player) {
+        int length = getName(player).trim().length();
+        JLabel counter = counters.get(player);
+        counter.setText(length + "/" + Player.MAX_NAME_LENGTH);
+        counter.setForeground(length > Player.MAX_NAME_LENGTH ? Theme.ERROR : Theme.MUTED);
+    }
+
+    private static DocumentListener onChange(Runnable r) {
+        return new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) { r.run(); }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) { r.run(); }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) { r.run(); }
+        };
+    }
+
     private static JLabel errorLabel() {
         JLabel l = Theme.label(" ", Theme.SMALL, Theme.ERROR);
         l.setBorder(BorderFactory.createEmptyBorder(6, 0, 0, 0));
@@ -383,6 +417,7 @@ public class SetupView extends JPanel {
         difficultyGroup.clearSelection();
         colorGroups.forEach(ButtonGroup::clearSelection);
         names.forEach(f -> f.setText(""));
+        for (int i = 0; i < counters.size(); i++) updateCounter(i);
         showError(" ");
         clearFieldErrors();
         updatePlayers();
