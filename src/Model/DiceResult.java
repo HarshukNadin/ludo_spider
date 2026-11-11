@@ -1,8 +1,16 @@
 package Model;
 
-/** Result of one roll: the Normal die value and the multiplier from a Boost/UltraBoost die (1 when none). */
+/**
+ * Result of one roll.
+ *
+ * @param normal     the Normal die, 1 to 6
+ * @param multiplier the Boost or UltraBoost die, or 1 when the difficulty has no extra die
+ */
 public record DiceResult(int normal, int multiplier) {
+    /** @return how many squares a piece already on the board moves */
     public int total() { return normal * multiplier; }
+
+    /** @return true when the Normal die shows 6, which lets a piece leave the castle and gives another roll */
     public boolean isSix() { return normal == 6; }
 
     @Override
