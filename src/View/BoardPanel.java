@@ -240,6 +240,13 @@ public class BoardPanel extends JPanel {
     private void castle(Graphics2D g, PlayerColor pc, int c) {
         Point o = castleCorner(pc);
         int x = o.x * c, y = o.y * c;
+        if (game.getPhase() != GamePhase.GAME_OVER && game.getCurrentPlayer().getColor() == pc) {
+            // The active player's castle gets a frame, so it is clear whose turn it is (EI-UI-2).
+            g.setColor(Theme.mix(Colors.of(pc), Theme.INK, 0.25f));
+            g.setStroke(new BasicStroke(Math.max(3f, c / 9f)));
+            g.drawRoundRect(x + c / 10, y + c / 10, 6 * c - c / 5, 6 * c - c / 5, c + c / 4, c + c / 4);
+            g.setStroke(new BasicStroke(1f));
+        }
         g.setColor(Colors.of(pc));
         g.fillRoundRect(x + c / 4, y + c / 4, 6 * c - c / 2, 6 * c - c / 2, c, c);
         g.setColor(Color.WHITE);
