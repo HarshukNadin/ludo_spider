@@ -99,7 +99,10 @@ public class SetupView extends JPanel {
             t.setVerticalAlignment(SwingConstants.CENTER);
             t.setPreferredSize(new Dimension(72, 52));
             t.getAccessibleContext().setAccessibleName(COUNTS[i] + " players");
-            t.addActionListener(e -> updatePlayers());
+            t.addActionListener(e -> {
+                fieldChanged(countError);
+                updatePlayers();
+            });
             countGroup.add(t);
             countTiles[i] = t;
             countRow.add(t);
@@ -114,7 +117,10 @@ public class SetupView extends JPanel {
         for (Difficulty d : Difficulty.values()) {
             ChoiceTile t = new ChoiceTile(describe(d));
             t.getAccessibleContext().setAccessibleName(title(d));
-            t.addActionListener(e -> updateSummary());
+            t.addActionListener(e -> {
+                fieldChanged(difficultyError);
+                updateSummary();
+            });
             difficultyGroup.add(t);
             difficultyTiles[d.ordinal()] = t;
             diffRow.add(t);
@@ -193,7 +199,10 @@ public class SetupView extends JPanel {
         JLabel counter = Theme.label("", Theme.SMALL, Theme.MUTED);
         counter.setPreferredSize(new Dimension(44, 20));
         counters.add(counter);
-        name.getDocument().addDocumentListener(onChange(() -> updateCounter(i)));
+        name.getDocument().addDocumentListener(onChange(() -> {
+            updateCounter(i);
+            fieldChanged(nameErrors.get(i));
+        }));
         row.add(counter, c);
 
         c.gridx = 3;
@@ -202,7 +211,10 @@ public class SetupView extends JPanel {
         c.insets = new Insets(0, 0, 0, 4);
         for (PlayerColor pc : PlayerColor.values()) {
             ColorSwatch s = new ColorSwatch(pc);
-            s.addActionListener(e -> updateTakenColors());
+            s.addActionListener(e -> {
+                fieldChanged(colorErrors.get(i));
+                updateTakenColors();
+            });
             group.add(s);
             own.add(s);
             row.add(s, c);
@@ -342,6 +354,17 @@ public class SetupView extends JPanel {
         JLabel counter = counters.get(player);
         counter.setText(length + "/" + Player.MAX_NAME_LENGTH);
         counter.setForeground(length > Player.MAX_NAME_LENGTH ? Theme.ERROR : Theme.MUTED);
+    }
+
+    /**
+     * The player changed a field, so its old message no longer applies. Everything else the player
+     * typed or picked stays as it is. When no message is left, the hint above Start game goes too.
+     */
+    private void fieldChanged(JLabel error) {
+        show(error, null);
+        boolean anyLeft = countError.isVisible() || difficultyError.isVisible()
+                || nameErrors.stream().anyMatch(JLabel::isVisible) || colorErrors.stream().anyMatch(JLabel::isVisible);
+        if (!anyLeft) showError(" ");
     }
 
     private static DocumentListener onChange(Runnable r) {
