@@ -30,7 +30,6 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.plaf.basic.BasicScrollBarUI;
 
 import Model.Difficulty;
 import Model.Game;
@@ -144,28 +143,7 @@ public class SetupView extends JPanel {
         scroll.setBorder(null);
         scroll.setOpaque(false);
         scroll.getViewport().setOpaque(false);
-        scroll.getVerticalScrollBar().setUnitIncrement(16);
-        scroll.getVerticalScrollBar().setOpaque(false);
-        scroll.getVerticalScrollBar().setPreferredSize(new Dimension(10, 0));
-        scroll.getVerticalScrollBar().setUI(new BasicScrollBarUI() {
-            @Override
-            protected void configureScrollBarColors() {
-                thumbColor = Theme.LINE;
-                trackColor = Theme.INK;
-            }
-
-            @Override
-            protected JButton createDecreaseButton(int orientation) { return noButton(); }
-
-            @Override
-            protected JButton createIncreaseButton(int orientation) { return noButton(); }
-
-            private JButton noButton() {
-                JButton b = new JButton();
-                b.setPreferredSize(new Dimension(0, 0));
-                return b;
-            }
-        });
+        Theme.darkScrollBars(scroll);
         add(scroll, BorderLayout.CENTER);
         add(summaryCard(), BorderLayout.EAST);
 

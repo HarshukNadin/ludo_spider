@@ -196,6 +196,7 @@ public class GameView extends JPanel {
         log.setBorder(null);
         JScrollPane scroll = new JScrollPane(log);
         scroll.setBorder(null);
+        Theme.darkScrollBars(scroll);
         card.add(scroll, BorderLayout.CENTER);
         return card;
     }
