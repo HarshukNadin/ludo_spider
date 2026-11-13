@@ -1,39 +1,47 @@
 # Spider Ludo
 
-Educational Ludo game for 2–4 players, written in Java (Swing). Group **spider**, Software Engineering course, University of Haifa.
+Educational Ludo game for 2–4 players on one computer, written in Java (Swing). Questions on the board are about Agile, MVC, design patterns, testing and software architecture. Group **Spider**, Software Engineering course, University of Haifa.
 
-## Steps in this version
+## Run
 
-1. **Project setup**: plain Java 17+ project, no external libraries. Data files in `data/`.
-2. **Model**: classes from our SRS entities: `Game`, `Player`, `Piece`, `Board`, `Square`, `Dice`, `Question`, `QuestionBank`, `GameHistory`. Rules: leave the castle on a 6, extra roll on a 6, third 6 cancelled, captures, Double Block, exact roll to the Final Home, question and surprise squares, finishing order.
-3. **MVC**: `model` (logic, no UI), `view` (Swing screens), `controller` (connects them). The Model notifies the controller through `GameListener` (Observer pattern).
+Java 17 or newer. Keep the `data/` folder next to the jar.
+
+```bash
+java -jar spider_ludo.jar
+```
+
+Double clicking the jar also works; the game finds `data/` next to it. A different data folder can be passed as the first argument.
+
+Build the jar from the source:
+
+```bash
+./build.sh        # macOS / Linux
+build.bat         # Windows
+```
+
+Eclipse: import the folder as a Java project, mark `src` and `test` as source folders, add JUnit 5 to the build path and run `Main` with the project folder as working directory.
+
+## Iteration 1 (submitted 15/11/2026)
+
+Main menu, game setup with per-field messages, the board for all three difficulties, turns, the Normal die, leaving the castle on a 6, moving pieces, and turns with no legal move (US-01 to US-04). Rules from later iterations that are already in the Model (Boost dice, capture, Double Block, questions, surprises, game end and history) work and are unit tested.
+
+Documents for this iteration are in `docs/iteration1/`: system report, acceptance test, class diagram and the architecture questions.
 
 ## Structure
 
 ```
 src/
   Main.java
-  Model/       game logic and CSV files
-  View/        MainFrame, MainMenuView, SetupView, GameView, BoardPanel, HistoryView
+  Model/       game rules and CSV files, no Swing
+  View/        Swing screens: menu, how to play, setup, game, board, question dialog, history
   Controller/  AppController, SetupController, GameController, HistoryController
-test/Model/    JUnit 5 tests for the model
-data/          questions.csv (30 questions), game_history.csv (course format)
+test/          JUnit 5 tests (57)
+data/          questions.csv (42 questions), game_history.csv (course format)
+docs/          iteration documents
 ```
 
-## Run
+The packages follow MVC as the course requires. The Model tells the controller about every change through `GameListener` (Observer).
 
-Eclipse: File > Import > Existing folder as Java project (or new Java project pointing at this folder), mark `src` and `test` as source folders, add JUnit 5 to the build path, run `Main`. The working directory must be the project folder so `data/` is found.
+## Team
 
-Runnable jar (Java 17 or newer):
-
-```bash
-./build.sh        # macOS / Linux
-build.bat         # Windows
-java -jar spider_ludo.jar
-```
-
-Keep the `data/` folder next to the jar. The game also finds it when the jar is opened by double click.
-
-## Next steps
-
-Extra outer routes for Medium/Hard, arrow squares, the "opponent dice" surprise, and the admin screen for managing questions.
+Nadin Harshuk, David Koliev, Bothyna Hakroush, Mahmoud Mokary. Every task has its own branch and pull request; another member approves it and the Scrum Master merges.
