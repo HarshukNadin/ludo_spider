@@ -3,6 +3,7 @@ package View;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Cursor;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -11,6 +12,9 @@ import java.awt.RenderingHints;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
+import javax.swing.plaf.basic.BasicScrollBarUI;
 
 /**
  * Colors, fonts and buttons shared by all screens, so the whole game looks like one product.
@@ -124,6 +128,39 @@ public final class Theme {
             }
             g.dispose();
             super.paintComponent(g0);
+        }
+    }
+
+    /**
+     * Gives a scroll pane a thin dark scroll bar that fits the ink-blue screens,
+     * instead of the light default one.
+     *
+     * @param scroll the scroll pane to style
+     */
+    public static void darkScrollBars(JScrollPane scroll) {
+        for (JScrollBar bar : new JScrollBar[] {scroll.getVerticalScrollBar(), scroll.getHorizontalScrollBar()}) {
+            bar.setOpaque(false);
+            bar.setUnitIncrement(16);
+            bar.setPreferredSize(new Dimension(10, 10));
+            bar.setUI(new BasicScrollBarUI() {
+                @Override
+                protected void configureScrollBarColors() {
+                    thumbColor = LINE;
+                    trackColor = INK;
+                }
+
+                @Override
+                protected JButton createDecreaseButton(int orientation) { return noButton(); }
+
+                @Override
+                protected JButton createIncreaseButton(int orientation) { return noButton(); }
+
+                private JButton noButton() {
+                    JButton b = new JButton();
+                    b.setPreferredSize(new Dimension(0, 0));
+                    return b;
+                }
+            });
         }
     }
 

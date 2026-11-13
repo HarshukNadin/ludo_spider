@@ -3,6 +3,7 @@ package View;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
@@ -12,6 +13,8 @@ import java.awt.LayoutManager;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.IntConsumer;
@@ -21,12 +24,15 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 
 import Model.Difficulty;
 import Model.Game;
@@ -196,6 +202,7 @@ public class GameView extends JPanel {
         log.setBorder(null);
         JScrollPane scroll = new JScrollPane(log);
         scroll.setBorder(null);
+        Theme.darkScrollBars(scroll);
         card.add(scroll, BorderLayout.CENTER);
         return card;
     }
@@ -310,13 +317,75 @@ public class GameView extends JPanel {
      * @return the chosen answer, 1 to 4
      */
     public int askQuestion(Question q) {
-        Object[] options = q.getAnswers().toArray();
-        int choice;
-        do {
-            choice = JOptionPane.showOptionDialog(this, "<html><body style='width:320px'>" + q.getText() + "</body></html>",
-                    "Question (" + q.getTopic() + ")", JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, null);
-        } while (choice < 0);
-        return choice + 1;
+        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this), "Question (" + q.getTopic() + ")",
+                Dialog.ModalityType.APPLICATION_MODAL);
+        int[] chosen = {0};
+        dialog.setContentPane(questionPanel(q, n -> {
+            chosen[0] = n;
+            dialog.dispose();
+        }));
+        // The question has to be answered; closing the window does nothing.
+        dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+        dialog.pack();
+        dialog.setLocationRelativeTo(this);
+        // Start with the focus on the panel, so no answer looks picked before the player chooses.
+        dialog.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowOpened(WindowEvent e) { dialog.getContentPane().requestFocusInWindow(); }
+        });
+        dialog.setVisible(true);
+        return chosen[0];
+    }
+
+    /**
+     * The inside of the question dialog (EI-UI-3): the question and four answers labeled A to D,
+     * picked with the mouse or the keys A to D. Long answers wrap, so the dialog stays narrow.
+     * The correct answer is not shown here.
+     *
+     * @param q      the question
+     * @param answer gets the chosen answer, 1 to 4
+     * @return the panel
+     */
+    static JPanel questionPanel(Question q, IntConsumer answer) {
+        JPanel panel = new JPanel(new BorderLayout(0, 18));
+        panel.setFocusable(true);
+        panel.setBackground(Theme.INK);
+        panel.setBorder(BorderFactory.createEmptyBorder(22, 24, 24, 24));
+        JPanel top = transparent(null);
+        top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));
+        top.add(Theme.label(q.getTopic() + ", " + name(q.getDifficulty().name()), Theme.SMALL, Theme.MUTED));
+        top.add(Box.createVerticalStrut(6));
+        top.add(Theme.label("<html><body style='width:440px'>" + escape(q.getText()) + "</body></html>", Theme.HEADING, Theme.TEXT));
+        panel.add(top, BorderLayout.NORTH);
+
+        JPanel grid = transparent(new GridLayout(2, 2, 10, 10));
+        List<String> answers = q.getAnswers();
+        for (int i = 0; i < answers.size(); i++) {
+            int n = i + 1;
+            char letter = (char) ('A' + i);
+            JButton b = Theme.secondary("<html><body style='width:190px'><b>" + letter + "</b>&nbsp;&nbsp;" + escape(answers.get(i)) + "</body></html>");
+            b.setFont(Theme.BODY);
+            b.setHorizontalAlignment(SwingConstants.LEFT);
+            b.getAccessibleContext().setAccessibleName(letter + ": " + answers.get(i));
+            b.addActionListener(e -> answer.accept(n));
+            grid.add(b);
+            String key = String.valueOf(letter);
+            panel.getInputMap(WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(key), "answer " + key);
+            panel.getActionMap().put("answer " + key, new AbstractAction() {
+                private static final long serialVersionUID = 1L;
+
+                @Override
+                public void actionPerformed(ActionEvent e) { b.doClick(); }
+            });
+        }
+        panel.add(grid, BorderLayout.CENTER);
+        panel.add(Theme.label("Click an answer or press A, B, C or D.", Theme.SMALL, Theme.MUTED), BorderLayout.SOUTH);
+        return panel;
+    }
+
+
+    private static String escape(String text) {
+        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 
     /** @param text a message to show in a dialog */
