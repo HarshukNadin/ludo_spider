@@ -2,6 +2,7 @@ package View;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
@@ -10,6 +11,7 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.RenderingHints;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
@@ -17,6 +19,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.IntConsumer;
 import javax.swing.JPanel;
 
 import Model.Board;
@@ -45,6 +48,7 @@ public class BoardPanel extends JPanel {
     private static final Color SURPRISE = new Color(0x8E5BD0);
 
     private Game game;
+    private IntConsumer pieceClick;
     /** Cell size and board origin from the last paint, used to find the square under the mouse. */
     private int cellSize, originX, originY;
 
@@ -53,6 +57,48 @@ public class BoardPanel extends JPanel {
         setOpaque(false);
         setPreferredSize(new Dimension(620, 620));
         setToolTipText("");
+        MouseAdapter mouse = new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int n = pieceUnder(e);
+                if (n > 0 && pieceClick != null) pieceClick.accept(n);
+            }
+
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                setCursor(Cursor.getPredefinedCursor(pieceUnder(e) > 0 ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
+            }
+        };
+        addMouseListener(mouse);
+        addMouseMotionListener(mouse);
+    }
+
+    /**
+     * @param l gets the piece number (1-4) when the active player clicks one of their glowing pieces
+     */
+    public void onPieceClick(IntConsumer l) { pieceClick = l; }
+
+    private int pieceUnder(MouseEvent e) {
+        if (game == null || cellSize == 0) return 0;
+        return movablePieceAt(game, (e.getX() - originX) / (double) cellSize, (e.getY() - originY) / (double) cellSize);
+    }
+
+    /**
+     * Finds the glowing piece at a point of the board, so it can be picked with the mouse (FR-3.05).
+     *
+     * @param game  the game on the board
+     * @param cellX x in cell units (0 is the left edge of the board)
+     * @param cellY y in cell units
+     * @return the number of the active player's movable piece there, or 0 if there is none
+     */
+    static int movablePieceAt(Game game, double cellX, double cellY) {
+        if (game.getPhase() != GamePhase.CHOOSING_PIECE) return 0;
+        Player p = game.getCurrentPlayer();
+        for (Piece piece : game.legalMoves()) {
+            Point2D.Double at = place(p, piece);
+            if (at.distance(cellX, cellY) <= 0.55) return piece.getNumber();
+        }
+        return 0;
     }
 
     /**
