@@ -18,7 +18,7 @@ public class RulesView extends JPanel {
     private static final String[][] RULES = {
         {"Goal", "Bring all four pieces from your castle to the Final Home in the center. "
                 + "Places go by who finishes first, and the game ends when one player is left."},
-        {"Getting out", "You need a 6 on the normal die to put a piece on your start square (#). "
+        {"Getting out", "You need a 6 on the normal die to put a piece on your start square, the square in your color next to your castle. "
                 + "If no piece is out and you roll 1 to 5, the turn passes."},
         {"Moving", "Pick any piece that can move. On Medium you also roll a Boost die (1-3), on Hard an UltraBoost die (1-6): "
                 + "pieces on the shared route move normal × boost. Pieces in your home path use the normal die only."},
