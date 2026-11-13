@@ -35,6 +35,7 @@ public class Game {
     private boolean ultraBoostNext;
     private Question pendingQuestion;
     private Piece questionPiece;
+    private String noMoveReason;
 
     /**
      * Starts a new game. Every player's pieces begin in their castle and the first player rolls first.
@@ -117,12 +118,45 @@ public class Game {
             return;
         }
         if (legalMoves().isEmpty()) {
-            boolean allInCastle = p.getPieces().stream().allMatch(x -> x.getState() == PieceState.IN_CASTLE);
-            nextTurn(p.getName() + " rolled " + result + ". " + (allInCastle ? "A 6 is needed to leave the castle." : "No piece can move."));
+            // Nothing moves (FR-3.07). The game waits so the players can see why, then passTurn() moves on.
+            noMoveReason = whyNoMove();
+            phase = GamePhase.NO_MOVE;
+            fire(p.getName() + " rolled " + result + ". " + noMoveReason);
             return;
         }
         phase = GamePhase.CHOOSING_PIECE;
         fire(p.getName() + " rolled " + result + ". Choose a piece.");
+    }
+
+    /**
+     * Ends a turn in which no piece could move (FR-3.07). Nothing on the board changes.
+     *
+     * @throws IllegalStateException if the last roll left a legal move
+     */
+    public void passTurn() {
+        requirePhase(GamePhase.NO_MOVE);
+        noMoveReason = null;
+        nextTurn(getCurrentPlayer().getName() + " passes the turn.");
+    }
+
+    /** @return why no piece can move with the last roll, or null when the game is not in {@link GamePhase#NO_MOVE} */
+    public String getNoMoveReason() { return noMoveReason; }
+
+    /** Explains, for the screen, why none of the current player's pieces can move. */
+    private String whyNoMove() {
+        boolean overshoot = false, blocked = false, onBoard = false;
+        for (Piece piece : getCurrentPlayer().getPieces()) {
+            PieceState state = piece.getState();
+            if (state == PieceState.FINISHED || state == PieceState.IN_CASTLE) continue;
+            onBoard = true;
+            int steps = state == PieceState.IN_HOME_PATH ? lastRoll.normal() : lastRoll.total();
+            if (piece.getProgress() + steps > Board.FINAL_INDEX) overshoot = true;
+            else blocked = true;
+        }
+        if (!onBoard) return "You need a 6 to bring a piece out.";
+        if (overshoot && !blocked) return "Your pieces need an exact roll to reach Final Home.";
+        if (blocked && !overshoot) return "A Double Block is in front of your pieces.";
+        return "Your pieces are blocked or need an exact roll to reach Final Home.";
     }
 
     /**
@@ -318,6 +352,7 @@ public class Game {
         throw new IllegalStateException(switch (phase) {
             case WAITING_FOR_ROLL -> getCurrentPlayer().getName() + " has to roll the dice first.";
             case CHOOSING_PIECE -> getCurrentPlayer().getName() + " has to choose a piece to move first.";
+            case NO_MOVE -> getCurrentPlayer().getName() + " cannot move. Click Next player to go on.";
             case ANSWERING_QUESTION -> "Answer the question first.";
             case GAME_OVER -> "The game is over. Start a new game from the menu.";
         });

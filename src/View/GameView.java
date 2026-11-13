@@ -57,6 +57,7 @@ public class GameView extends JPanel {
     private final JLabel move = Theme.label(" ", Theme.HEADING, Color.WHITE);
     private final JLabel instruction = Theme.label(" ", Theme.BODY_BOLD, Color.WHITE);
     private final JButton roll = Theme.primary("Roll dice");
+    private final JButton next = Theme.primary("Next player");
     private final JButton[] pieceButtons = new JButton[Player.PIECES];
     private final JPanel pieceRow = transparent(new GridLayout(1, Player.PIECES, 6, 0));
     private final JLabel shortcut = Theme.label(" ", Theme.SMALL, Color.WHITE);
@@ -96,20 +97,23 @@ public class GameView extends JPanel {
     }
 
     /**
-     * R or Space rolls, 1 to 4 picks a piece (CR-14). The keys do the same as the buttons,
+     * R or Space rolls, 1 to 4 picks a piece, and Space, Enter or N goes to the next player
+     * after a turn with no legal move (CR-14). The keys do the same as the buttons,
      * so they only work when the matching button is shown and enabled.
      */
     private void bindKeys() {
         setFocusable(true);
         key("R", roll);
-        key("SPACE", roll);
+        key("SPACE", roll, next);
+        key("ENTER", next);
+        key("N", next);
         for (int i = 0; i < Player.PIECES; i++) {
             key(String.valueOf(i + 1), pieceButtons[i]);
             key("NUMPAD" + (i + 1), pieceButtons[i]);
         }
     }
 
-    private void key(String stroke, JButton button) {
+    private void key(String stroke, JButton... buttons) {
         String name = "press " + stroke;
         getInputMap(WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(stroke), name);
         getActionMap().put(name, new AbstractAction() {
@@ -117,7 +121,12 @@ public class GameView extends JPanel {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (button.isShowing() && button.isEnabled()) button.doClick();
+                for (JButton button : buttons) {
+                    if (button.isShowing() && button.isEnabled()) {
+                        button.doClick();
+                        return;
+                    }
+                }
             }
         });
     }
@@ -149,11 +158,13 @@ public class GameView extends JPanel {
             pieceRow.add(pieceButtons[i]);
         }
         turnCard.add(roll);
+        turnCard.add(next);
         turnCard.add(pieceRow);
         turnCard.add(Box.createVerticalStrut(8));
         turnCard.add(shortcut);
         for (Component c : turnCard.getComponents()) ((JComponent) c).setAlignmentX(LEFT_ALIGNMENT);
         roll.setMaximumSize(new Dimension(Integer.MAX_VALUE, 48));
+        next.setMaximumSize(new Dimension(Integer.MAX_VALUE, 48));
         pieceRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         dice.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
         turnCard.setMaximumSize(new Dimension(Integer.MAX_VALUE, 330));
@@ -220,18 +231,21 @@ public class GameView extends JPanel {
         move.setText(rolled ? "Move " + game.getLastRoll().total() : " ");
 
         List<Piece> movable = phase == GamePhase.CHOOSING_PIECE ? game.legalMoves() : List.of();
-        instruction.setText(switch (phase) {
+        instruction.setText("<html><body style='width:250px'>" + switch (phase) {
             case WAITING_FOR_ROLL -> "Roll the dice to start your turn.";
             case CHOOSING_PIECE -> movable.size() == 1 ? "Choose the glowing piece." : "Choose one of the " + movable.size() + " glowing pieces.";
+            case NO_MOVE -> game.getNoMoveReason() + " The turn passes.";
             case ANSWERING_QUESTION -> "Answer the question.";
             case GAME_OVER -> "Back to the menu to play again.";
-        });
+        } + "</body></html>");
         shortcut.setText(switch (phase) {
             case WAITING_FOR_ROLL -> "Shortcut: press R or Space.";
+            case NO_MOVE -> "Shortcut: press Enter or Space.";
             case CHOOSING_PIECE -> "Shortcut: press the piece number, or click it.";
             default -> " ";
         });
-        roll.setVisible(phase != GamePhase.CHOOSING_PIECE);
+        roll.setVisible(phase != GamePhase.CHOOSING_PIECE && phase != GamePhase.NO_MOVE);
+        next.setVisible(phase == GamePhase.NO_MOVE);
         pieceRow.setVisible(phase == GamePhase.CHOOSING_PIECE);
         roll.setEnabled(phase == GamePhase.WAITING_FOR_ROLL);
         for (int i = 0; i < Player.PIECES; i++) {
@@ -319,6 +333,9 @@ public class GameView extends JPanel {
         }
         board.onPieceClick(l);
     }
+
+    /** @param l runs when Next player is clicked after a turn with no legal move */
+    public void onNext(ActionListener l) { next.addActionListener(l); }
 
     /** @param l runs when Quit to menu is clicked */
     public void onQuit(ActionListener l) { quit.addActionListener(l); }

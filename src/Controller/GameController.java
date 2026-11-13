@@ -22,6 +22,7 @@ public class GameController {
         this.view = view;
         this.history = history;
         view.onRoll(e -> act(() -> game.roll()));
+        view.onNext(e -> act(() -> game.passTurn()));
         view.onPiece(n -> act(() -> game.move(game.getCurrentPlayer().getPiece(n))));
         view.onQuit(e -> app.showMenu());
     }
