@@ -44,7 +44,7 @@ public class DiceFace extends JComponent {
      */
     public void setValue(int value) {
         this.value = value;
-        getAccessibleContext().setAccessibleName(value == 0 ? "Not rolled yet" : multiplier ? "times " + value : String.valueOf(value));
+        setToolTipText(value == 0 ? "Not rolled yet" : multiplier ? "Boost die: times " + value : "Normal die: " + value);
         repaint();
     }
 
