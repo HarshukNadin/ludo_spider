@@ -125,7 +125,12 @@ public class Game {
         fire(p.getName() + " rolled " + result + ". Choose a piece.");
     }
 
-    /** Pieces of the current player that can move with the last roll. */
+    /**
+     * The pieces the current player may choose after the last roll (FR-3.05).
+     * The player can pick any of them; a piece that is not in this list cannot move.
+     *
+     * @return the movable pieces, empty before the first roll or when nothing can move
+     */
     public List<Piece> legalMoves() {
         List<Piece> out = new ArrayList<>();
         if (lastRoll == null) return out;
@@ -133,7 +138,19 @@ public class Game {
         return out;
     }
 
-    /** Where the piece would end up with the last roll, or null if it cannot move. */
+    /**
+     * Where a piece would end up with the last roll.
+     * <ul>
+     * <li>From the castle: only with a 6 on the Normal die, to the start square (progress 0).
+     *     The Boost or UltraBoost die is not used for leaving the castle (FR-3.04).</li>
+     * <li>In the home path: the Normal die only (CR-01).</li>
+     * <li>On the shared track: Normal die x extra die. The route turns into the home path
+     *     after the color's arrow square, so no extra step is needed for the arrow (FR-3.05).</li>
+     * </ul>
+     *
+     * @param piece one of the current player's pieces
+     * @return the progress after the move, or null if this piece cannot move
+     */
     public Integer targetOf(Piece piece) {
         switch (piece.getState()) {
             case FINISHED: return null;
@@ -213,7 +230,13 @@ public class Game {
         return s.getMessage();
     }
 
-    /** Walks step by step; stops before an opponent's Double Block and needs an exact roll for the Final Home. */
+    /**
+     * Walks step by step, forward or back.
+     * An opponent's Double Block stops the piece on the square before it, in both directions (CR-02).
+     * Going back never goes behind the start square (CR-10). Going past the Final Home is not allowed (FR-3.10).
+     *
+     * @return the progress where the piece stops, or null if it cannot move at all
+     */
     private Integer walk(Piece piece, int steps) {
         int pos = piece.getProgress(), dir = Integer.signum(steps);
         for (int i = 0; i < Math.abs(steps); i++) {
