@@ -29,3 +29,15 @@ id,difficulty,topic,question,answer1,answer2,answer3,answer4,correct
 28,HARD,QA,What does code coverage measure?,How fast code runs,How much code is run by tests,How many users the app has,How many classes exist,2
 29,HARD,Agile,What is technical debt?,Money owed to the client,"Extra future work caused by quick, poor solutions",A licence cost,Unpaid salaries,2
 30,HARD,Design Patterns,"Which pattern saves and restores an object's state (for example, undo)?",Memento,Adapter,Composite,Proxy,1
+31,EASY,Architecture,"In Eclipse, how does a plug-in add a feature, such as a new menu item, without changing the platform's code?",Through an extension point,By editing the Eclipse source,By replacing the Platform,Through a shared database,1
+32,EASY,Architecture,"In the Pipeline pattern, what happens to the output of one stage?",It is thrown away,It becomes the input of the next stage,It goes back to the first stage,It is only shown to the user,2
+33,EASY,Architecture,"In an event-driven architecture, what makes the system act?",A timer that runs every second,The order of classes in the code,Events from producers to consumers,A loop that reads the database,3
+34,EASY,Architecture,What is another name for Hexagonal Architecture?,Model-View-Controller,Pipes and Filters,Client-Server,Ports and Adapters,4
+35,MEDIUM,Architecture,"In early Eclipse versions, where did a plug-in describe what it adds to the platform?",In a plug-in.xml manifest file,In the Platform's Java code,In the JVM settings,On a web page Eclipse downloads,1
+36,MEDIUM,Architecture,"In the classic three-phase compiler design described in the LLVM chapter, what are the three parts?","Lexer, linker and loader","Front end, optimizer and back end","Model, view and controller","Client, server and database",2
+37,MEDIUM,Architecture,How does Event Sourcing keep the changes made to data?,Keeps only the newest state,Copies the database each time,As events in an append-only store,In memory only,3
+38,MEDIUM,Architecture,"In Hexagonal Architecture, what sits in the center of the application?",The database,The user interface,The network code,The business logic,4
+39,HARD,Architecture,Why does a common code representation in the optimizer help the three-phase design?,Front ends and back ends can be mixed,No optimizer is needed,The front end runs machine code,Only one language is supported,1
+40,HARD,Architecture,Which cost of Event Sourcing does the pattern description warn about?,Nobody can see who changed data,The event store can grow very large,The current state cannot be rebuilt,It needs a graphical interface,2
+41,HARD,Architecture,"In a microservices system, what is the API Gateway?",A database shared by all services,A tool that compiles the services,One entry point that routes requests,An admin user interface,3
+42,HARD,Architecture,"In the e-commerce example, which jobs does the API Gateway take on besides routing requests?",Storing product pictures,Designing the app screens,Writing each microservice,"Authentication, rate limits, logging",4
