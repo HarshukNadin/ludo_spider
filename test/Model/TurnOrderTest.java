@@ -23,7 +23,8 @@ class TurnOrderTest {
     void turnsFollowTheSetupOrderAndWrapAround() {
         assertEquals(red, game.getCurrentPlayer(), "the first player in the setup starts");
         for (Player expected : List.of(green, yellow, red, green)) {
-            game.roll(new DiceResult(2, 1)); // nobody is out of the castle, so the turn passes
+            game.roll(new DiceResult(2, 1)); // nobody is out of the castle, so nothing can move
+            game.passTurn();
             assertEquals(expected, game.getCurrentPlayer());
             assertEquals(GamePhase.WAITING_FOR_ROLL, game.getPhase());
         }

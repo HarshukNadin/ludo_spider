@@ -223,6 +223,7 @@ public class GameView extends JPanel {
         instruction.setText(switch (phase) {
             case WAITING_FOR_ROLL -> "Roll the dice to start your turn.";
             case CHOOSING_PIECE -> movable.size() == 1 ? "Choose the glowing piece." : "Choose one of the " + movable.size() + " glowing pieces.";
+            case NO_MOVE -> game.getNoMoveReason() + " The turn passes.";
             case ANSWERING_QUESTION -> "Answer the question.";
             case GAME_OVER -> "Back to the menu to play again.";
         });

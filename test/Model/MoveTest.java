@@ -28,7 +28,7 @@ class MoveTest {
     void castlePiecesCannotMoveWithoutASix() {
         game.roll(new DiceResult(5, 3));
         assertTrue(game.legalMoves().isEmpty());
-        assertEquals(green, game.getCurrentPlayer(), "nothing can move, so the turn passes");
+        assertEquals(GamePhase.NO_MOVE, game.getPhase(), "nothing can move");
     }
 
     @Test

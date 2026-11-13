@@ -28,8 +28,11 @@ class GameTest {
     @Test
     void pieceLeavesCastleOnlyOnSix() {
         game.roll(new DiceResult(5, 1));
-        assertEquals(green, game.getCurrentPlayer(), "No move possible, turn passes");
+        assertEquals(GamePhase.NO_MOVE, game.getPhase(), "No move possible");
+        game.passTurn();
+        assertEquals(green, game.getCurrentPlayer());
         game.roll(new DiceResult(3, 1));
+        game.passTurn();
         game.roll(new DiceResult(6, 1));
         assertEquals(GamePhase.CHOOSING_PIECE, game.getPhase());
         game.move(red.getPiece(1));
@@ -78,8 +81,10 @@ class GameTest {
     void finalHomeNeedsExactRoll() {
         red.getPiece(1).setProgress(Board.FINAL_INDEX - 2);
         game.roll(new DiceResult(3, 1));
-        assertEquals(green, game.getCurrentPlayer(), "Too high, no move");
+        assertEquals(GamePhase.NO_MOVE, game.getPhase(), "Too high, no move");
+        game.passTurn();
         game.roll(new DiceResult(1, 1));
+        game.passTurn();
         game.roll(new DiceResult(2, 1));
         game.move(red.getPiece(1));
         assertEquals(PieceState.FINISHED, red.getPiece(1).getState());
