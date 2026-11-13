@@ -10,10 +10,12 @@ import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.LayoutManager;
 import java.awt.RenderingHints;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.IntConsumer;
+import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -24,6 +26,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.KeyStroke;
 
 import Model.Difficulty;
 import Model.Game;
@@ -89,6 +92,34 @@ public class GameView extends JPanel {
         side.add(buildLogCard());
         for (Component c : side.getComponents()) ((JComponent) c).setAlignmentX(LEFT_ALIGNMENT);
         add(side, BorderLayout.EAST);
+        bindKeys();
+    }
+
+    /**
+     * R or Space rolls, 1 to 4 picks a piece (CR-14). The keys do the same as the buttons,
+     * so they only work when the matching button is shown and enabled.
+     */
+    private void bindKeys() {
+        setFocusable(true);
+        key("R", roll);
+        key("SPACE", roll);
+        for (int i = 0; i < Player.PIECES; i++) {
+            key(String.valueOf(i + 1), pieceButtons[i]);
+            key("NUMPAD" + (i + 1), pieceButtons[i]);
+        }
+    }
+
+    private void key(String stroke, JButton button) {
+        String name = "press " + stroke;
+        getInputMap(WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(stroke), name);
+        getActionMap().put(name, new AbstractAction() {
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (button.isShowing() && button.isEnabled()) button.doClick();
+            }
+        });
     }
 
     private JComponent buildTurnCard() {
@@ -212,6 +243,8 @@ public class GameView extends JPanel {
         showPlayers(game);
         if (message != null && !message.isBlank()) log.insert(message + "\n\n", 0);
         log.setCaretPosition(0);
+        // Keep the focus on the screen itself, so Space rolls instead of pressing a focused button.
+        requestFocusInWindow();
     }
 
     private void showPlayers(Game game) {
@@ -278,12 +311,13 @@ public class GameView extends JPanel {
     /** @param l runs when Roll dice is clicked */
     public void onRoll(ActionListener l) { roll.addActionListener(l); }
 
-    /** @param l gets the piece number (1-4) when a piece button is clicked */
+    /** @param l gets the piece number (1-4) when a piece is picked with its button, its key or on the board */
     public void onPiece(IntConsumer l) {
         for (int i = 0; i < Player.PIECES; i++) {
             int n = i + 1;
             pieceButtons[i].addActionListener(e -> l.accept(n));
         }
+        board.onPieceClick(l);
     }
 
     /** @param l runs when Quit to menu is clicked */

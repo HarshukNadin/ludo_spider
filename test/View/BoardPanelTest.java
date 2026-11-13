@@ -8,6 +8,9 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 import Model.Board;
+import Model.DiceResult;
+import Model.Game;
+import Model.Player;
 import Model.PlayerColor;
 
 class BoardPanelTest {
@@ -49,4 +52,39 @@ class BoardPanelTest {
                     assertNotEquals(BoardPanel.trackCell(i), BoardPanel.homeCell(c, k));
         }
     }
+
+    // ---------- Picking a piece with the mouse (T-4.4) ----------
+
+    private static Game twoPlayerGame(Player red, Player green) {
+        return new Game(Model.Difficulty.EASY, java.util.List.of(red, green), null, new java.util.Random(1));
+    }
+
+    @Test
+    void clickOnAGlowingPieceInTheCastlePicksIt() {
+        Player red = new Player("Nadin", PlayerColor.RED), green = new Player("David", PlayerColor.GREEN);
+        Game game = twoPlayerGame(red, green);
+        game.roll(new DiceResult(6, 1));
+        Point corner = BoardPanel.castleCorner(PlayerColor.RED);
+        assertEquals(1, BoardPanel.movablePieceAt(game, corner.x + 2.25, corner.y + 2.25));
+        assertEquals(4, BoardPanel.movablePieceAt(game, corner.x + 3.75, corner.y + 3.8));
+    }
+
+    @Test
+    void clickOnAnEmptySquareOrAnOpponentPicksNothing() {
+        Player red = new Player("Nadin", PlayerColor.RED), green = new Player("David", PlayerColor.GREEN);
+        Game game = twoPlayerGame(red, green);
+        game.roll(new DiceResult(6, 1));
+        Point greenCastle = BoardPanel.castleCorner(PlayerColor.GREEN);
+        assertEquals(0, BoardPanel.movablePieceAt(game, greenCastle.x + 2.25, greenCastle.y + 2.25), "not Nadin's piece");
+        assertEquals(0, BoardPanel.movablePieceAt(game, 7.5, 7.5), "center of the board");
+    }
+
+    @Test
+    void nothingCanBePickedBeforeTheRoll() {
+        Player red = new Player("Nadin", PlayerColor.RED), green = new Player("David", PlayerColor.GREEN);
+        Game game = twoPlayerGame(red, green);
+        Point corner = BoardPanel.castleCorner(PlayerColor.RED);
+        assertEquals(0, BoardPanel.movablePieceAt(game, corner.x + 2.25, corner.y + 2.25));
+    }
 }
+
