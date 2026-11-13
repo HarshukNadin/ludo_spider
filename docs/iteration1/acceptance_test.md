@@ -66,7 +66,10 @@ Found during the run and fixed:
 - The Game history screen still had the old grey look and the game log had a light scroll bar.
   Bothyna fixed both in PR #15 (look only, no rule change).
 
+Done after the run:
+
+- The jar from the submission zip ran on a second computer, Windows 11 with Java 21 (risk R-03, Mahmoud).
+
 Still open for the team:
 
-- Run the jar on a second computer, ideally Windows (risk R-03, Mahmoud).
 - EI-UI-5 (5 first-time users finish setup in 2 minutes) is planned for the usability test in Iteration 3 (US-15).
