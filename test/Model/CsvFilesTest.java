@@ -35,12 +35,12 @@ class CsvFilesTest {
     }
 
     @Test
-    void questionBankLoadsThirtyQuestionsAndRoundTrips() throws Exception {
+    void questionBankLoadsAllQuestionsAndRoundTrips() throws Exception {
         QuestionBank bank = new QuestionBank(Path.of("data/questions.csv"));
         bank.load();
-        assertEquals(30, bank.getAll().size());
+        assertEquals(42, bank.getAll().size());
         for (Difficulty d : Difficulty.values())
-            assertEquals(10, bank.getAll().stream().filter(q -> q.getDifficulty() == d).count());
+            assertEquals(14, bank.getAll().stream().filter(q -> q.getDifficulty() == d).count());
         Path copy = dir.resolve("q.csv");
         Files.copy(Path.of("data/questions.csv"), copy);
         QuestionBank b2 = new QuestionBank(copy);
