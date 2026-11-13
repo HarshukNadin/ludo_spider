@@ -68,7 +68,7 @@ Found during the run and fixed:
 
 Done after the run:
 
-- The jar from the submission zip ran on a second computer (risk R-03, Mahmoud).
+- The jar from the submission zip ran on a second computer, Windows 11 with Java 21 (risk R-03, Mahmoud).
 
 Still open for the team:
 
