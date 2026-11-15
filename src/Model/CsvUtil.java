@@ -7,6 +7,12 @@ import java.util.List;
 public final class CsvUtil {
     private CsvUtil() {}
 
+    /**
+     * Splits one CSV line into fields. Quoted fields may hold commas and doubled quotes.
+     *
+     * @param line one line of the file
+     * @return the fields
+     */
     public static List<String> parseLine(String line) {
         List<String> out = new ArrayList<>();
         StringBuilder cur = new StringBuilder();
@@ -25,12 +31,22 @@ public final class CsvUtil {
         return out;
     }
 
+    /**
+     * Quotes a field when it holds a comma, a quote or a line break (DC-3).
+     *
+     * @param s the field, may be null
+     * @return the text to write
+     */
     public static String escape(String s) {
         if (s == null) return "";
         if (s.contains(",") || s.contains("\"") || s.contains("\n")) return '"' + s.replace("\"", "\"\"") + '"';
         return s;
     }
 
+    /**
+     * @param fields the fields of one record
+     * @return one CSV line, each field escaped
+     */
     public static String join(List<String> fields) {
         List<String> esc = new ArrayList<>();
         for (String f : fields) esc.add(escape(f));

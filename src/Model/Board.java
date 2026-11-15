@@ -19,6 +19,12 @@ public class Board {
     private final Difficulty difficulty;
     private final List<Square> track = new ArrayList<>();
 
+    /**
+     * Builds the 52-square track with the fixed Start and Arrow squares and the random special squares.
+     *
+     * @param difficulty decides how many special squares there are
+     * @param random     used to place them
+     */
     public Board(Difficulty difficulty, Random random) {
         this.difficulty = difficulty;
         for (int i = 0; i < TRACK_LENGTH; i++) track.add(new Square(i, SquareType.NORMAL));
@@ -39,8 +45,14 @@ public class Board {
         for (int k = 0; k < difficulty.getSurpriseSquares(); k++) free.get(i++).setType(SquareType.SURPRISE);
     }
 
+    /** @return the difficulty the board was built for */
     public Difficulty getDifficulty() { return difficulty; }
+    /** @return the 52 shared squares in order, read only */
     public List<Square> getTrack() { return Collections.unmodifiableList(track); }
+    /**
+     * @param trackIndex 0 to 51
+     * @return the square at that place on the track
+     */
     public Square getSquare(int trackIndex) { return track.get(trackIndex); }
 
     /** Fixed arrow square of a color: the last shared square before its home path (FR-2.06). */

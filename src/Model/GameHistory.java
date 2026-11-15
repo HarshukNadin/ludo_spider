@@ -19,8 +19,15 @@ public class GameHistory {
 
     private final Path file;
 
+    /** @param file the game_history.csv file */
     public GameHistory(Path file) { this.file = file; }
 
+    /**
+     * Reads all saved games. A missing file means no games yet.
+     *
+     * @return the records in file order
+     * @throws IOException if the file cannot be read or a line is damaged
+     */
     public List<GameRecord> load() throws IOException {
         List<GameRecord> out = new ArrayList<>();
         if (!Files.exists(file)) return out;
@@ -36,6 +43,16 @@ public class GameHistory {
         return out;
     }
 
+    /**
+     * Adds one finished game to the file, with the next gameID; writes the header first if the file is new (FR-5.04, FR-5.07).
+     *
+     * @param difficulty the game's level
+     * @param endedAt    when it ended
+     * @param places     names in finishing order
+     * @param duration   how long it took
+     * @return the saved record
+     * @throws IOException if the file cannot be written
+     */
     public GameRecord append(Difficulty difficulty, LocalDateTime endedAt, List<String> places, Duration duration) throws IOException {
         int id = load().stream().mapToInt(GameRecord::gameId).max().orElse(0) + 1;
         GameRecord r = new GameRecord(id, difficulty, TIMESTAMP.format(endedAt), places, formatDuration(duration));
@@ -47,6 +64,10 @@ public class GameHistory {
         return r;
     }
 
+    /**
+     * @param d a game time
+     * @return the time as HH:MM:SS
+     */
     public static String formatDuration(Duration d) {
         long s = d.getSeconds();
         return String.format("%02d:%02d:%02d", s / 3600, (s % 3600) / 60, s % 60);

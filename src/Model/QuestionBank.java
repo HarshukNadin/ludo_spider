@@ -20,8 +20,14 @@ public class QuestionBank {
     private final List<Question> questions = new ArrayList<>();
     private final Set<Integer> usedThisGame = new HashSet<>();
 
+    /** @param file the questions.csv file */
     public QuestionBank(Path file) { this.file = file; }
 
+    /**
+     * Reads all questions from the file; a missing file gives an empty bank.
+     *
+     * @throws IOException if the file cannot be read
+     */
     public void load() throws IOException {
         questions.clear();
         if (!Files.exists(file)) return;
@@ -34,6 +40,11 @@ public class QuestionBank {
         }
     }
 
+    /**
+     * Writes all questions back to the file.
+     *
+     * @throws IOException if the file cannot be written
+     */
     public void save() throws IOException {
         List<String> lines = new ArrayList<>();
         lines.add(HEADER);
@@ -46,6 +57,7 @@ public class QuestionBank {
         Files.write(file, lines, StandardCharsets.UTF_8);
     }
 
+    /** @return every question, read only */
     public List<Question> getAll() { return Collections.unmodifiableList(questions); }
 
     /** Picks a random question of the given level, preferring ones not yet asked in this game. */
@@ -58,14 +70,27 @@ public class QuestionBank {
         return Optional.of(q);
     }
 
+    /** Forgets which questions were asked, for a new game (FR-4.07). */
     public void resetUsed() { usedThisGame.clear(); }
 
     // Admin operations (SRS Feature 6). Access control is handled by the controller.
+    /** @return a free id for a new question */
     public int nextId() { return questions.stream().mapToInt(Question::getId).max().orElse(0) + 1; }
+    /** @param q a new question */
     public void add(Question q) { questions.add(q); }
+    /**
+     * Replaces the question that has the same id.
+     *
+     * @param q the changed question
+     * @throws IllegalArgumentException if no question has that id
+     */
     public void update(Question q) {
         for (int i = 0; i < questions.size(); i++) if (questions.get(i).getId() == q.getId()) { questions.set(i, q); return; }
         throw new IllegalArgumentException("No question with id " + q.getId());
     }
+    /**
+     * @param id the question to remove
+     * @return true if a question was removed
+     */
     public boolean delete(int id) { return questions.removeIf(q -> q.getId() == id); }
 }

@@ -19,9 +19,17 @@ public enum Surprise {
         this.message = message;
     }
 
+    /** @return the chance of this event, in percent */
     public int getPercent() { return percent; }
+    /** @return the text shown to the players */
     public String getMessage() { return message; }
 
+    /**
+     * Picks one event; each event comes up with its own chance ({@link #getPercent}).
+     *
+     * @param random source of randomness
+     * @return the event
+     */
     public static Surprise draw(Random random) {
         int r = random.nextInt(100), acc = 0;
         for (Surprise s : values()) {
