@@ -17,6 +17,13 @@ public class GameController {
     private final GameHistory history;
     private Game game;
 
+    /**
+     * Connects the game screen's buttons and keys to the game.
+     *
+     * @param app     used to go back to the menu
+     * @param view    the game screen
+     * @param history where finished games are saved
+     */
     public GameController(AppController app, GameView view, GameHistory history) {
         this.app = app;
         this.view = view;
@@ -27,6 +34,11 @@ public class GameController {
         view.onQuit(e -> app.showMenu());
     }
 
+    /**
+     * Starts showing a new game: listens to its changes and clears the old log.
+     *
+     * @param game the game to play
+     */
     public void open(Game game) {
         this.game = game;
         game.addListener(this::onGameChanged);

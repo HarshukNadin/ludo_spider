@@ -26,6 +26,12 @@ public class AppController {
     private final GameController gameController;
     private final HistoryController historyController;
 
+    /**
+     * Loads the question bank, builds every screen with its controller and wires the menu.
+     * If the question bank cannot be read, a message is shown and the game still opens.
+     *
+     * @param dataDir folder with questions.csv and game_history.csv
+     */
     public AppController(Path dataDir) {
         questionBank = new QuestionBank(dataDir.resolve("questions.csv"));
         history = new GameHistory(dataDir.resolve("game_history.csv"));
@@ -60,15 +66,25 @@ public class AppController {
         menu.onExit(e -> System.exit(0));
     }
 
+    /** Shows the window with the main menu. */
     public void start() {
         frame.setVisible(true);
         showMenu();
     }
 
+    /** @return the question bank that new games take their questions from */
     public QuestionBank getQuestionBank() { return questionBank; }
 
+    /** Shows the main menu and puts the focus on its first option. */
     public void showMenu() { frame.showScreen(MENU); menu.focusFirst(); }
+    /** Opens the New game screen with an empty form. */
     public void showSetup() { setupController.open(); frame.showScreen(SETUP); }
+    /** Opens the Game history screen with the records read again from the file. */
     public void showHistory() { historyController.open(); frame.showScreen(HISTORY); }
+    /**
+     * Shows the game screen for a game that has just been set up.
+     *
+     * @param game the new game
+     */
     public void startGame(Game game) { gameController.open(game); frame.showScreen(GAME); }
 }

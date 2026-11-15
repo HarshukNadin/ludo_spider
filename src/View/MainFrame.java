@@ -10,6 +10,7 @@ public class MainFrame extends JFrame {
     private final CardLayout cards = new CardLayout();
     private final JPanel root = new JPanel(cards);
 
+    /** Creates the empty window; screens are added with {@link #addScreen}. */
     public MainFrame() {
         super("Spider Ludo");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -19,8 +20,17 @@ public class MainFrame extends JFrame {
         setLocationRelativeTo(null);
     }
 
+    /**
+     * @param name   name used to show the screen later
+     * @param screen the screen panel
+     */
     public void addScreen(String name, JPanel screen) { root.add(screen, name); }
 
+    /**
+     * Swaps the window to another screen.
+     *
+     * @param name a name given to {@link #addScreen}
+     */
     public void showScreen(String name) {
         cards.show(root, name);
         root.revalidate();
