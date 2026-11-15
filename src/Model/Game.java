@@ -79,16 +79,27 @@ public class Game {
     private void fire(String message) { for (GameListener l : listeners) l.gameChanged(this, message); }
 
     // ---------- Getters ----------
+    /** @return the level chosen in setup */
     public Difficulty getDifficulty() { return difficulty; }
+    /** @return the players in turn order */
     public List<Player> getPlayers() { return players; }
+    /** @return the board of this game */
     public Board getBoard() { return board; }
+    /** @return the player whose turn it is */
     public Player getCurrentPlayer() { return players.get(current); }
+    /** @return what the game is waiting for */
     public GamePhase getPhase() { return phase; }
+    /** @return the last roll, or null before the first roll */
     public DiceResult getLastRoll() { return lastRoll; }
+    /** @return the question to answer, or null when there is none */
     public Question getPendingQuestion() { return pendingQuestion; }
+    /** @return the players who finished, first place first */
     public List<Player> getFinishOrder() { return Collections.unmodifiableList(finishOrder); }
+    /** @return when the game started */
     public LocalDateTime getStartedAt() { return startedAt; }
+    /** @return when the game ended, or null while it is running */
     public LocalDateTime getEndedAt() { return endedAt; }
+    /** @return the game time so far, or the full time once the game is over */
     public Duration getDuration() { return Duration.between(startedAt, endedAt != null ? endedAt : LocalDateTime.now()); }
 
     // ---------- Turn flow ----------

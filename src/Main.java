@@ -11,6 +11,11 @@ import Controller.AppController;
 public class Main {
     private static final Logger LOG = Logger.getLogger(Main.class.getName());
 
+    /**
+     * Opens the game window.
+     *
+     * @param args optional path of the data folder; without it the folder is looked up
+     */
     public static void main(String[] args) {
         Path dataDir = args.length > 0 ? Path.of(args[0]) : findDataDir();
         SwingUtilities.invokeLater(() -> {
