@@ -20,6 +20,9 @@ public class RulesView extends JPanel {
                 + "Places go by who finishes first, and the game ends when one player is left."},
         {"Getting out", "You need a 6 on the normal die to put a piece on your start square, the square in your color next to your castle. "
                 + "If no piece is out and you roll 1 to 5, the turn passes."},
+        {"Outer routes", "Medium adds a ring of 64 squares around the board, and Hard a second ring of 72. "
+                + "Your start square is the outer corner next to your castle. Walk clockwise; at an arrow in your color, "
+                + "step one ring inward and go around it, until the arrow that leads into your home path."},
         {"Moving", "Pick any piece that can move. On Medium you also roll a Boost die (1-3), on Hard an UltraBoost die (1-6): "
                 + "pieces on the shared route move normal × boost. Pieces in your home path use the normal die only."},
         {"Rolling a 6", "A 6 gives you another roll. Three 6s in a row cancel the third roll and the turn passes."},
