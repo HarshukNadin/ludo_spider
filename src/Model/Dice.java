@@ -3,14 +3,15 @@ package Model;
 import java.util.Random;
 
 /**
- * Dice for each difficulty (SRS Feature 3):
- * Easy uses the Normal die, Medium adds a Boost die (1-3), Hard adds an UltraBoost die (1-6).
+ * The dice of a game (SRS Feature 3). The way of rolling is a {@link DiceStrategy}:
+ * Easy uses {@link NormalDice}, Medium {@link BoostDice} and Hard {@link UltraBoostDice}.
  */
 public class Dice {
     /** Faces of the Normal die (FR-3.02). */
     public static final int NORMAL_FACES = 6;
 
     private final Random random;
+    private final DiceStrategy ultraBoost = new UltraBoostDice();
 
     /**
      * @param random source of randomness; tests pass a seeded one to get the same rolls every time
@@ -18,19 +19,36 @@ public class Dice {
     public Dice(Random random) { this.random = random; }
 
     /**
-     * Rolls the Normal die, plus the extra die of the difficulty.
+     * @param difficulty a level
+     * @return the dice strategy of that level
+     */
+    public static DiceStrategy strategyFor(Difficulty difficulty) {
+        switch (difficulty) {
+            case MEDIUM: return new BoostDice();
+            case HARD: return new UltraBoostDice();
+            default: return new NormalDice();
+        }
+    }
+
+    /**
+     * Rolls the dice of a level.
      * Every face has the same chance because each value comes from {@link Random#nextInt(int)}.
      *
-     * @param difficulty      decides which extra die is used, if any
+     * @param difficulty      decides which strategy is used
      * @param forceUltraBoost true when a surprise gives the player an UltraBoost roll on any difficulty
      * @return the Normal die value (1-6) and the multiplier (1 when there is no extra die)
      */
     public DiceResult roll(Difficulty difficulty, boolean forceUltraBoost) {
-        int normal = 1 + random.nextInt(NORMAL_FACES);
-        int multiplier;
-        if (forceUltraBoost || difficulty == Difficulty.HARD) multiplier = 1 + random.nextInt(6);
-        else if (difficulty == Difficulty.MEDIUM) multiplier = 1 + random.nextInt(3);
-        else multiplier = 1;
-        return new DiceResult(normal, multiplier);
+        return roll(forceUltraBoost ? ultraBoost : strategyFor(difficulty));
+    }
+
+    /**
+     * Rolls with a given strategy.
+     *
+     * @param strategy how to roll
+     * @return the roll
+     */
+    public DiceResult roll(DiceStrategy strategy) {
+        return strategy.roll(random);
     }
 }
