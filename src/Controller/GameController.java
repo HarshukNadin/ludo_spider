@@ -1,12 +1,12 @@
 package Controller;
 
-import java.io.IOException;
 import java.util.List;
 import javax.swing.SwingUtilities;
 
 import Model.Game;
+import Model.GameEvent;
 import Model.GameHistory;
-import Model.GamePhase;
+import Model.HistoryRecorder;
 import Model.Player;
 import View.GameView;
 
@@ -16,6 +16,7 @@ public class GameController {
     private final GameView view;
     private final GameHistory history;
     private Game game;
+    private HistoryRecorder recorder;
 
     /**
      * Connects the game screen's buttons and keys to the game.
@@ -41,6 +42,9 @@ public class GameController {
      */
     public void open(Game game) {
         this.game = game;
+        // Two observers of the same game: the recorder saves it when it ends, the screen shows every event.
+        recorder = new HistoryRecorder(history);
+        game.addListener(recorder);
         game.addListener(this::onGameChanged);
         view.clearLog();
         view.render(game, "Game started on " + game.getDifficulty().csvName() + ". " + game.getCurrentPlayer().getName() + " goes first.");
@@ -54,12 +58,12 @@ public class GameController {
         }
     }
 
-    private void onGameChanged(Game g, String message) {
-        view.render(g, message);
-        if (g.getPhase() == GamePhase.ANSWERING_QUESTION) {
+    private void onGameChanged(Game g, GameEvent event) {
+        view.render(g, event.message());
+        if (event.type() == GameEvent.Type.QUESTION) {
             // Ask after this event finishes, so the board is drawn first.
             SwingUtilities.invokeLater(() -> g.answerQuestion(view.askQuestion(g.getPendingQuestion())));
-        } else if (g.getPhase() == GamePhase.GAME_OVER) {
+        } else if (event.type() == GameEvent.Type.GAME_OVER) {
             SwingUtilities.invokeLater(this::finish);
         }
     }
@@ -69,11 +73,7 @@ public class GameController {
         StringBuilder sb = new StringBuilder("Final ranking:\n");
         for (int i = 0; i < places.size(); i++) sb.append(i + 1).append(". ").append(places.get(i)).append('\n');
         sb.append("Game time: ").append(GameHistory.formatDuration(game.getDuration()));
-        try {
-            history.append(game.getDifficulty(), game.getEndedAt(), places, game.getDuration());
-        } catch (IOException e) {
-            sb.append("\n\nThe result could not be saved: ").append(e.getMessage());
-        }
+        if (recorder.getError() != null) sb.append("\n\n").append(recorder.getError());
         view.showMessage(sb.toString());
         app.showHistory();
     }
