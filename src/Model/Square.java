@@ -5,6 +5,8 @@ public class Square {
     private final int route;
     private final int index;
     private SquareType type;
+    /** Level of the questions asked here; only set on Question squares (FR-4.03). */
+    private Difficulty questionLevel;
 
     /**
      * A square of the standard 52-square track.
@@ -34,6 +36,9 @@ public class Square {
     /** @return what kind of square it is */
     public SquareType getType() { return type; }
     void setType(SquareType type) { this.type = type; }
+    /** @return Easy, Medium or Hard on a Question square, otherwise null */
+    public Difficulty getQuestionLevel() { return type == SquareType.QUESTION ? questionLevel : null; }
+    void setQuestionLevel(Difficulty level) { this.questionLevel = level; }
 
     @Override
     public String toString() { return "route " + route + " square " + index + " (" + type + ")"; }

@@ -83,7 +83,12 @@ public class Board {
         Collections.shuffle(free, random);
         int i = 0;
         for (int k = 0; k < difficulty.getProtectionSquares(); k++) free.get(i++).setType(SquareType.PROTECTION);
-        for (int k = 0; k < difficulty.getQuestionSquares(); k++) free.get(i++).setType(SquareType.QUESTION);
+        // The same number of Easy, Medium and Hard Question squares: 2 each on Medium, 3 each on Hard (FR-2.03, FR-2.04).
+        for (int k = 0; k < difficulty.getQuestionSquares(); k++) {
+            Square q = free.get(i++);
+            q.setType(SquareType.QUESTION);
+            q.setQuestionLevel(Difficulty.values()[k % Difficulty.values().length]);
+        }
         for (int k = 0; k < difficulty.getSurpriseSquares(); k++) free.get(i++).setType(SquareType.SURPRISE);
     }
 
