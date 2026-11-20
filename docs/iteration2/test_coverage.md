@@ -57,4 +57,4 @@ example a route number that does not exist or the default branch of a switch ove
 | RulesTest | 13 | Move rules on Medium and Hard |
 | HistoryFileTest | 11 | The history file against the course template |
 | EndViewTest | 5 | The end screen |
-| Iteration 1 tests | 59 | Setup, turns, moves, no move, board, CSV files, board drawing |
+| Other test classes | 59 | Setup, turns, moves, no move, board, CSV files, board drawing with the rings |
