@@ -7,8 +7,15 @@ import java.util.HashSet;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+import java.util.Random;
+
 import Model.Board;
 import Model.DiceResult;
+import Model.Difficulty;
+import Model.OuterBoard;
+import Model.Route;
+import Model.Square;
 import Model.Game;
 import Model.Player;
 import Model.PlayerColor;
@@ -86,5 +93,40 @@ class BoardPanelTest {
         Point corner = BoardPanel.castleCorner(PlayerColor.RED);
         assertEquals(0, BoardPanel.movablePieceAt(game, corner.x + 2.25, corner.y + 2.25));
     }
-}
 
+    // ---------- Outer routes of Medium and Hard (T-5.3) ----------
+
+    @Test
+    void ringsSurroundTheBoardWithoutOverlapping() {
+        Set<Point> seen = new HashSet<>();
+        for (int i = 0; i < Board.TRACK_LENGTH; i++) seen.add(BoardPanel.trackCell(i));
+        for (int route : List.of(Route.RING_64, Route.RING_72)) {
+            int len = Route.lengthOf(route);
+            for (int i = 0; i < len; i++) {
+                Point p = BoardPanel.ringCell(route, i);
+                assertTrue(p.x < 0 || p.y < 0 || p.x >= BoardPanel.N || p.y >= BoardPanel.N, "ring cell " + p + " is inside the standard board");
+                assertTrue(seen.add(p), "two squares share cell " + p);
+                Point next = BoardPanel.ringCell(route, i + 1);
+                assertEquals(1, Math.abs(p.x - next.x) + Math.abs(p.y - next.y), "gap after ring square " + i);
+            }
+        }
+        assertEquals(new Point(-2, -2), BoardPanel.ringCell(Route.RING_72, 0), "square 0 is the top-left corner");
+        assertEquals(new Point(15, -1), BoardPanel.ringCell(Route.RING_64, 16), "then clockwise");
+    }
+
+    @Test
+    void everyColorPathIsDrawnAsOneConnectedLine() {
+        for (Difficulty d : List.of(Difficulty.MEDIUM, Difficulty.HARD)) {
+            Board board = new OuterBoard(d, new Random(1));
+            for (PlayerColor c : PlayerColor.values()) {
+                List<Square> path = board.getPath(c);
+                for (int i = 0; i + 1 < path.size(); i++) {
+                    Point a = BoardPanel.cellOf(path.get(i)), b = BoardPanel.cellOf(path.get(i + 1));
+                    assertTrue(touching(a, b), d + " " + c + ": gap after step " + i);
+                }
+                Point last = BoardPanel.cellOf(path.get(path.size() - 1)), home = BoardPanel.homeCell(c, 0);
+                assertEquals(1, Math.abs(last.x - home.x) + Math.abs(last.y - home.y), c + " arrow is next to its home path");
+            }
+        }
+    }
+}
