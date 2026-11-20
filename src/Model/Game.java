@@ -81,7 +81,18 @@ public class Game {
     // ---------- Observer ----------
     /** @param l called after every change of the game state */
     public void addListener(GameListener l) { listeners.add(l); }
-    private void fire(String message) { for (GameListener l : listeners) l.gameChanged(this, message); }
+
+    /**
+     * Stops sending events to a listener.
+     *
+     * @param l a listener added before
+     */
+    public void removeListener(GameListener l) { listeners.remove(l); }
+
+    private void fire(GameEvent.Type type, String message) {
+        GameEvent event = new GameEvent(type, message, getCurrentPlayer());
+        for (GameListener l : List.copyOf(listeners)) l.gameChanged(this, event);
+    }
 
     // ---------- Getters ----------
     /** @return the level chosen in setup */
@@ -146,11 +157,11 @@ public class Game {
             // Nothing moves (FR-3.07). The game waits so the players can see why, then passTurn() moves on.
             noMoveReason = whyNoMove();
             state = new NoMoveState();
-            fire(p.getName() + " rolled " + result + ". " + noMoveReason);
+            fire(GameEvent.Type.NO_MOVE, p.getName() + " rolled " + result + ". " + noMoveReason);
             return;
         }
         state = new ChoosingPieceState();
-        fire(p.getName() + " rolled " + result + ". Choose a piece.");
+        fire(GameEvent.Type.ROLLED, p.getName() + " rolled " + result + ". Choose a piece.");
     }
 
     /**
@@ -281,7 +292,7 @@ public class Game {
                 pendingQuestion = q.get();
                 questionPiece = piece;
                 state = new AnsweringQuestionState();
-                fire(msg + " Question square!");
+                fire(GameEvent.Type.QUESTION, msg + " Question square!");
                 return;
             }
         }
@@ -357,12 +368,12 @@ public class Game {
             for (Player x : players) if (!finishOrder.contains(x)) finishOrder.add(x);
             endedAt = LocalDateTime.now();
             state = new GameOverState();
-            fire(message + " Game over.");
+            fire(GameEvent.Type.GAME_OVER, message + " Game over.");
             return;
         }
         if (lastRoll != null && lastRoll.isSix() && !p.hasFinished()) {
             state = new WaitingForRollState();
-            fire(message + " A 6 gives " + p.getName() + " another roll.");
+            fire(GameEvent.Type.TURN, message + " A 6 gives " + p.getName() + " another roll.");
         } else {
             nextTurn(message);
         }
@@ -381,6 +392,6 @@ public class Game {
             if (!finishOrder.contains(p)) break;
         } while (true);
         state = new WaitingForRollState();
-        fire(message + " " + getCurrentPlayer().getName() + "'s turn.");
+        fire(GameEvent.Type.TURN, message + " " + getCurrentPlayer().getName() + "'s turn.");
     }
 }
