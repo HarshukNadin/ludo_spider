@@ -388,6 +388,13 @@ public class Game {
             fire(GameEvent.Type.GAME_OVER, message + " Game over.");
             return;
         }
+        if (ultraBoostNext && !p.hasFinished()) {
+            // UltraBoost surprise: the same player rolls again at once, whatever 6s came before (CR-07).
+            sixesInRow = 0;
+            state = new WaitingForRollState();
+            fire(GameEvent.Type.TURN, message + " " + p.getName() + " gets an extra turn with the UltraBoost die.");
+            return;
+        }
         if (lastRoll != null && lastRoll.isSix() && !p.hasFinished()) {
             state = new WaitingForRollState();
             fire(GameEvent.Type.TURN, message + " A 6 gives " + p.getName() + " another roll.");
@@ -398,6 +405,7 @@ public class Game {
 
     private void nextTurn(String message) {
         sixesInRow = 0;
+        ultraBoostNext = false;
         do {
             current = (current + 1) % players.size();
             Player p = getCurrentPlayer();
