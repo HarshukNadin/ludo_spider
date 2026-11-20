@@ -270,11 +270,12 @@ public class Game {
 
     /** Answering itself; only {@link AnsweringQuestionState} calls it. */
     void applyAnswer(int answer) {
-        int steps = difficulty.getQuestionSteps();
+        // Steps follow the question's own level: 1, 2 or 3 (FR-4.05).
+        int steps = pendingQuestion.getDifficulty().getQuestionSteps();
         boolean right = pendingQuestion.isCorrect(answer);
         Integer to = walk(questionPiece, right ? steps : -steps);
         if (to != null) questionPiece.setProgress(to);
-        StringBuilder msg = new StringBuilder(right ? "Correct! " : "Wrong answer. ");
+        StringBuilder msg = new StringBuilder(right ? "Correct! " : "Wrong answer. The right answer was " + rightAnswer(pendingQuestion) + ". ");
         msg.append("Piece ").append(questionPiece.getNumber()).append(right ? " moves " + steps + " forward." : " moves " + steps + " back.");
         captureAt(questionPiece, msg);
         pendingQuestion = null;
@@ -287,7 +288,7 @@ public class Game {
         Square square = piece.getSquare();
         SquareType type = square == null ? SquareType.NORMAL : square.getType();
         if (type == SquareType.QUESTION && questionBank != null) {
-            var q = questionBank.randomQuestion(difficulty, random);
+            var q = questionBank.randomQuestion(square.getQuestionLevel(), random);
             if (q.isPresent()) {
                 pendingQuestion = q.get();
                 questionPiece = piece;
@@ -300,11 +301,27 @@ public class Game {
         endMove(msg.toString());
     }
 
+    /**
+     * @param q a question
+     * @return the right answer as shown on the buttons, for example "B (Observer)"
+     */
+    static String rightAnswer(Question q) {
+        int n = q.getCorrectAnswer();
+        return (char) ('A' + n - 1) + " (" + q.getAnswers().get(n - 1) + ")";
+    }
+
     String applySurprise(Piece piece, Surprise s) {
         switch (s) {
             case GO_TO_FINAL_HOME -> piece.setProgress(piece.getOwner().getFinalIndex());
             case BACK_TO_CASTLE -> piece.sendToCastle();
-            case THREE_STEPS_BACK -> { Integer to = walk(piece, -3); if (to != null) piece.setProgress(to); }
+            case THREE_STEPS_BACK -> {
+                Integer to = walk(piece, -3);
+                if (to != null) piece.setProgress(to);
+                // Moving back follows the normal rules, so it can capture (FR-4.06).
+                StringBuilder captured = new StringBuilder();
+                captureAt(piece, captured);
+                return s.getMessage() + captured;
+            }
             case SKIP_NEXT_TURN -> piece.getOwner().setSkipNextTurn(true);
             case ULTRABOOST_ROLL -> ultraBoostNext = true;
             case OPPONENT_DICE -> { /* TODO: agree with the group how this effect works; for now it does nothing. */ }

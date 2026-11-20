@@ -23,6 +23,7 @@ import java.util.function.IntConsumer;
 import javax.swing.JPanel;
 
 import Model.Board;
+import Model.Difficulty;
 import Model.Game;
 import Model.GamePhase;
 import Model.Piece;
@@ -48,7 +49,10 @@ public class BoardPanel extends JPanel {
     private static final Point[] PATH = buildPath();
 
     private static final Color STAR = new Color(0xD9A400);
-    private static final Color QUESTION = new Color(0xF0A020);
+    /** Question squares by level, as in the project description: easy green, medium yellow, hard red. */
+    private static final Color QUESTION_EASY = new Color(0x2E9E5B);
+    private static final Color QUESTION_MEDIUM = new Color(0xF0A020);
+    private static final Color QUESTION_HARD = new Color(0xD9443A);
     private static final Color SURPRISE = new Color(0x8E5BD0);
 
     private Game game;
@@ -221,11 +225,24 @@ public class BoardPanel extends JPanel {
         int x = p.x * c, y = p.y * c;
         switch (sq.getType()) {
             case PROTECTION -> star(g, x + c / 2, y + c / 2, c * 0.36);
-            case QUESTION -> badge(g, x, y, c, QUESTION, "?");
+            case QUESTION -> badge(g, x, y, c, questionColor(sq.getQuestionLevel()), "?");
             case SURPRISE -> gift(g, x, y, c);
             case ARROW -> arrow(g, x, y, c, sq);
             default -> { }
         }
+    }
+
+    /**
+     * @param level the level of a Question square
+     * @return its badge color
+     */
+    static Color questionColor(Difficulty level) {
+        if (level == null) return QUESTION_MEDIUM;
+        return switch (level) {
+            case EASY -> QUESTION_EASY;
+            case MEDIUM -> QUESTION_MEDIUM;
+            case HARD -> QUESTION_HARD;
+        };
     }
 
     /** @return the color whose Start square this is, or null */
@@ -313,7 +330,7 @@ public class BoardPanel extends JPanel {
                 return switch (sq.getType()) {
                     case START -> name(startOwner(sq)) + " start square. Pieces here are safe.";
                     case PROTECTION -> "Protection square. Pieces here cannot be captured.";
-                    case QUESTION -> "Question square. Answer right to move forward, wrong to move back.";
+                    case QUESTION -> questionTip(sq.getQuestionLevel());
                     case SURPRISE -> "Surprise square. Something random happens.";
                     case ARROW -> arrowTip(sq);
                     default -> null;
@@ -321,6 +338,12 @@ public class BoardPanel extends JPanel {
             }
         }
         return null;
+    }
+
+    private static String questionTip(Difficulty level) {
+        int steps = level.getQuestionSteps();
+        String name = level.csvName().substring(0, 1).toUpperCase() + level.csvName().substring(1);
+        return name + " question square. A right answer moves you " + steps + " forward, a wrong one " + steps + " back.";
     }
 
     private String arrowTip(Square sq) {

@@ -63,7 +63,11 @@ public class QuestionBank {
     /** Picks a random question of the given level, preferring ones not yet asked in this game. */
     public Optional<Question> randomQuestion(Difficulty level, Random random) {
         List<Question> pool = questions.stream().filter(q -> q.getDifficulty() == level && !usedThisGame.contains(q.getId())).toList();
-        if (pool.isEmpty()) pool = questions.stream().filter(q -> q.getDifficulty() == level).toList();
+        if (pool.isEmpty()) {
+            // Every question of this level was asked: start a new round of this level only (FR-4.07).
+            pool = questions.stream().filter(q -> q.getDifficulty() == level).toList();
+            pool.forEach(q -> usedThisGame.remove(q.getId()));
+        }
         if (pool.isEmpty()) return Optional.empty();
         Question q = pool.get(random.nextInt(pool.size()));
         usedThisGame.add(q.getId());

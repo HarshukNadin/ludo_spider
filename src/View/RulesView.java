@@ -31,8 +31,8 @@ public class RulesView extends JPanel {
         {"Double Block", "Two of your pieces on one square make a wall. Opponents can't land on it or pass it, "
                 + "forward or back, so they stop on the square before it."},
         {"Getting home", "You need the exact number to reach the Final Home. If it is too big, move another piece or the turn passes."},
-        {"Question squares", "Answer a question about software engineering. Easy, medium and hard questions move you "
-                + "1, 2 or 3 steps: forward if you are right, back if you are wrong."},
+        {"Question squares", "Answer a question about software engineering. Green squares ask easy questions, yellow medium "
+                + "and red hard ones. They move you 1, 2 or 3 steps: forward if you are right, back if you are wrong."},
         {"Surprise squares", "Something random happens: a jump to the Final Home, a push for an opponent, back to the castle, "
                 + "3 steps back, a lost turn, or an extra turn with the UltraBoost die."},
     };
