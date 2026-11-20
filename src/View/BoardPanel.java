@@ -29,12 +29,16 @@ import Model.Piece;
 import Model.PieceState;
 import Model.Player;
 import Model.PlayerColor;
+import Model.Route;
 import Model.Square;
+import Model.SquareType;
 
 /**
  * Draws the game board from the Model (FR-1.08). It is the usual cross-shaped Ludo board on a
  * 15 x 15 grid: the 52 shared squares go around the cross, each color's home path runs along the
  * middle of its arm to the center, and the castles sit in the four corners.
+ * On Medium a ring of 64 squares goes around it, and on Hard a second ring of 72 squares around
+ * that (FR-2.03, FR-2.04). Cells are counted on the 15 x 15 grid, so ring cells can be -1, -2, 15 or 16.
  */
 public class BoardPanel extends JPanel {
     private static final long serialVersionUID = 1L;
@@ -135,6 +139,27 @@ public class BoardPanel extends JPanel {
     }
 
     /**
+     * @param route {@link Route#RING_64} or {@link Route#RING_72}
+     * @param index 0 to 63 or 0 to 71; 0 is the top-left corner, then clockwise
+     * @return the grid cell of that ring square
+     */
+    static Point ringCell(int route, int index) {
+        int side = Route.sideOf(route), i = Math.floorMod(index, 4 * side), lo = -route, hi = lo + side;
+        if (i <= side) return new Point(lo + i, lo);
+        if (i <= 2 * side) return new Point(hi, lo + i - side);
+        if (i <= 3 * side) return new Point(hi - (i - 2 * side), hi);
+        return new Point(lo, hi - (i - 3 * side));
+    }
+
+    /**
+     * @param sq a square of any route
+     * @return its grid cell
+     */
+    static Point cellOf(Square sq) {
+        return sq.getRoute() == Route.STANDARD ? trackCell(sq.getIndex()) : ringCell(sq.getRoute(), sq.getIndex());
+    }
+
+    /**
      * @param color the owner of the home path
      * @param step  0 to 5; step 5 is the Final Home in the center
      * @return the grid cell of that home path step
@@ -162,19 +187,22 @@ public class BoardPanel extends JPanel {
         Graphics2D g = (Graphics2D) g0.create();
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        int c = (Math.min(getWidth(), getHeight()) - 24) / N, s = c * N;
+        int rings = game.getBoard().getRoutes().size() - 1, cells = N + 2 * rings;
+        int c = (Math.min(getWidth(), getHeight()) - 24) / cells, s = c * cells;
         int x0 = (getWidth() - s) / 2, y0 = (getHeight() - s) / 2;
         cellSize = c;
-        originX = x0;
-        originY = y0;
+        originX = x0 + rings * c;
+        originY = y0 + rings * c;
         g.translate(x0, y0);
 
         g.setColor(new Color(0, 0, 0, 60));
         g.fillRoundRect(4, 8, s, s, 24, 24);
         g.setColor(Theme.PAPER);
         g.fillRoundRect(-8, -8, s + 16, s + 16, 24, 24);
+        g.translate(rings * c, rings * c);
 
-        for (Square sq : game.getBoard().getTrack()) square(g, sq, trackCell(sq.getIndex()), c);
+        for (Route r : game.getBoard().getRoutes())
+            for (Square sq : r.getSquares()) square(g, sq, cellOf(sq), c);
         for (PlayerColor pc : PlayerColor.values()) {
             for (int k = 0; k < Board.HOME_PATH_LENGTH - 1; k++)
                 cell(g, homeCell(pc, k), c, Theme.mix(Colors.of(pc), Color.WHITE, 0.55f));
@@ -187,22 +215,42 @@ public class BoardPanel extends JPanel {
 
     private void square(Graphics2D g, Square sq, Point p, int c) {
         Color fill = Color.WHITE;
-        for (PlayerColor pc : PlayerColor.values())
-            if (pc.getStartSquare() == sq.getIndex()) fill = Theme.mix(Colors.of(pc), Color.WHITE, 0.35f);
+        PlayerColor owner = startOwner(sq);
+        if (owner != null) fill = Theme.mix(Colors.of(owner), Color.WHITE, 0.35f);
         cell(g, p, c, fill);
         int x = p.x * c, y = p.y * c;
         switch (sq.getType()) {
             case PROTECTION -> star(g, x + c / 2, y + c / 2, c * 0.36);
             case QUESTION -> badge(g, x, y, c, QUESTION, "?");
             case SURPRISE -> gift(g, x, y, c);
-            case ARROW -> arrow(g, x, y, c, arrowOwner(sq.getIndex()));
+            case ARROW -> arrow(g, x, y, c, sq);
             default -> { }
         }
     }
 
-    private static PlayerColor arrowOwner(int trackIndex) {
-        for (PlayerColor pc : PlayerColor.values()) if (Board.arrowSquare(pc) == trackIndex) return pc;
+    /** @return the color whose Start square this is, or null */
+    private PlayerColor startOwner(Square sq) {
+        if (sq.getType() != SquareType.START) return null;
+        for (PlayerColor pc : PlayerColor.values()) if (game.getBoard().getPath(pc).get(0) == sq) return pc;
         return null;
+    }
+
+    /** @return the color that turns at this Arrow square, or null */
+    private PlayerColor arrowOwner(Square sq) {
+        if (sq.getType() != SquareType.ARROW) return null;
+        for (PlayerColor pc : PlayerColor.values()) {
+            List<Square> path = game.getBoard().getPath(pc);
+            int i = path.indexOf(sq);
+            if (i >= 0 && (i == path.size() - 1 || path.get(i + 1).getRoute() != sq.getRoute())) return pc;
+        }
+        return null;
+    }
+
+    /** @return the cell a piece of the arrow's color goes to after the Arrow square */
+    private Point afterArrow(Square sq, PlayerColor owner) {
+        List<Square> path = game.getBoard().getPath(owner);
+        int i = path.indexOf(sq);
+        return i == path.size() - 1 ? homeCell(owner, 0) : cellOf(path.get(i + 1));
     }
 
     private static void star(Graphics2D g, int cx, int cy, double r) {
@@ -237,8 +285,10 @@ public class BoardPanel extends JPanel {
         g.fillRect(x + c / 2 - 1, y + m, 3, w);
     }
 
-    private static void arrow(Graphics2D g, int x, int y, int c, PlayerColor owner) {
-        Point from = trackCell(Board.arrowSquare(owner)), to = homeCell(owner, 0);
+    private void arrow(Graphics2D g, int x, int y, int c, Square sq) {
+        PlayerColor owner = arrowOwner(sq);
+        if (owner == null) return;
+        Point from = cellOf(sq), to = afterArrow(sq, owner);
         double angle = Math.atan2(to.y - from.y, to.x - from.x);
         Graphics2D a = (Graphics2D) g.create();
         a.translate(x + c / 2.0, y + c / 2.0);
@@ -257,19 +307,27 @@ public class BoardPanel extends JPanel {
     public String getToolTipText(MouseEvent e) {
         if (game == null || cellSize == 0) return null;
         Point p = new Point(Math.floorDiv(e.getX() - originX, cellSize), Math.floorDiv(e.getY() - originY, cellSize));
-        for (Square sq : game.getBoard().getTrack()) {
-            if (!trackCell(sq.getIndex()).equals(p)) continue;
-            for (PlayerColor pc : PlayerColor.values())
-                if (pc.getStartSquare() == sq.getIndex()) return name(pc) + " start square. Pieces here are safe.";
-            return switch (sq.getType()) {
-                case PROTECTION -> "Protection square. Pieces here cannot be captured.";
-                case QUESTION -> "Question square. Answer right to move forward, wrong to move back.";
-                case SURPRISE -> "Surprise square. Something random happens.";
-                case ARROW -> name(arrowOwner(sq.getIndex())) + " turns into its home path after this square.";
-                default -> null;
-            };
+        for (Route r : game.getBoard().getRoutes()) {
+            for (Square sq : r.getSquares()) {
+                if (!cellOf(sq).equals(p)) continue;
+                return switch (sq.getType()) {
+                    case START -> name(startOwner(sq)) + " start square. Pieces here are safe.";
+                    case PROTECTION -> "Protection square. Pieces here cannot be captured.";
+                    case QUESTION -> "Question square. Answer right to move forward, wrong to move back.";
+                    case SURPRISE -> "Surprise square. Something random happens.";
+                    case ARROW -> arrowTip(sq);
+                    default -> null;
+                };
+            }
         }
         return null;
+    }
+
+    private String arrowTip(Square sq) {
+        PlayerColor owner = arrowOwner(sq);
+        List<Square> path = game.getBoard().getPath(owner);
+        return path.get(path.size() - 1) == sq ? name(owner) + " turns into its home path after this square."
+                : name(owner) + " moves to the inner route after this square.";
     }
 
     private static String name(PlayerColor pc) {
@@ -332,8 +390,7 @@ public class BoardPanel extends JPanel {
     private static Point2D.Double place(Player owner, Piece piece) {
         PlayerColor pc = owner.getColor();
         if (piece.getState() == PieceState.IN_CASTLE) return castleSpot(pc, piece.getNumber());
-        Point p = piece.getState() == PieceState.ON_TRACK ? trackCell(piece.getTrackIndex())
-                : homeCell(pc, piece.getProgress() - (Board.TRACK_LENGTH - 1));
+        Point p = piece.getState() == PieceState.ON_TRACK ? cellOf(piece.getSquare()) : homeCell(pc, piece.getHomeStep());
         return new Point2D.Double(p.x + 0.5, p.y + 0.5);
     }
 
