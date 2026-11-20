@@ -51,7 +51,7 @@ public class Game {
         this.difficulty = difficulty;
         this.players = List.copyOf(players);
         this.random = random;
-        this.board = difficulty == Difficulty.EASY ? new Board(difficulty, random) : new OuterBoard(difficulty, random);
+        this.board = BoardFactory.createBoard(difficulty, random);
         for (Player p : this.players) p.setBoard(board);
         this.dice = new Dice(random);
         this.questionBank = questionBank;
