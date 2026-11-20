@@ -1,6 +1,6 @@
 package Model;
 
-/** What the game is waiting for. */
+/** What the game is waiting for. Each phase has a {@link GameState} class that holds its rules (State pattern). */
 public enum GamePhase {
     /** The current player has to roll. */
     WAITING_FOR_ROLL,

@@ -31,7 +31,8 @@ public class Game {
     private LocalDateTime endedAt;
 
     private int current;
-    private GamePhase phase = GamePhase.WAITING_FOR_ROLL;
+    /** What the game is waiting for (State pattern); each state decides which actions it accepts. */
+    private GameState state = new WaitingForRollState();
     private DiceResult lastRoll;
     private int sixesInRow;
     private boolean ultraBoostNext;
@@ -94,7 +95,10 @@ public class Game {
     /** @return the player whose turn it is */
     public Player getCurrentPlayer() { return players.get(current); }
     /** @return what the game is waiting for */
-    public GamePhase getPhase() { return phase; }
+    public GamePhase getPhase() { return state.getPhase(); }
+    /** @return the current state object */
+    public GameState getState() { return state; }
+    void setState(GameState state) { this.state = state; }
     /** @return the last roll, or null before the first roll */
     public DiceResult getLastRoll() { return lastRoll; }
     /** @return the question to answer, or null when there is none */
@@ -126,7 +130,11 @@ public class Game {
      * @throws IllegalStateException if the game is not waiting for a roll
      */
     public void roll(DiceResult result) {
-        requirePhase(GamePhase.WAITING_FOR_ROLL);
+        state.roll(this, result);
+    }
+
+    /** The roll itself; only {@link WaitingForRollState} calls it. */
+    void applyRoll(DiceResult result) {
         ultraBoostNext = false;
         lastRoll = result;
         Player p = getCurrentPlayer();
@@ -137,11 +145,11 @@ public class Game {
         if (legalMoves().isEmpty()) {
             // Nothing moves (FR-3.07). The game waits so the players can see why, then passTurn() moves on.
             noMoveReason = whyNoMove();
-            phase = GamePhase.NO_MOVE;
+            state = new NoMoveState();
             fire(p.getName() + " rolled " + result + ". " + noMoveReason);
             return;
         }
-        phase = GamePhase.CHOOSING_PIECE;
+        state = new ChoosingPieceState();
         fire(p.getName() + " rolled " + result + ". Choose a piece.");
     }
 
@@ -151,7 +159,11 @@ public class Game {
      * @throws IllegalStateException if the last roll left a legal move
      */
     public void passTurn() {
-        requirePhase(GamePhase.NO_MOVE);
+        state.passTurn(this);
+    }
+
+    /** Passing the turn itself; only {@link NoMoveState} calls it. */
+    void applyPassTurn() {
         noMoveReason = null;
         nextTurn(getCurrentPlayer().getName() + " passes the turn.");
     }
@@ -219,7 +231,11 @@ public class Game {
      * @throws IllegalArgumentException if the piece is not the current player's or cannot move
      */
     public void move(Piece piece) {
-        requirePhase(GamePhase.CHOOSING_PIECE);
+        state.move(this, piece);
+    }
+
+    /** The move itself; only {@link ChoosingPieceState} calls it. */
+    void applyMove(Piece piece) {
         Player p = getCurrentPlayer();
         if (piece.getOwner() != p)
             throw new IllegalArgumentException("It is " + p.getName() + "'s turn. Move one of " + p.getName() + "'s pieces.");
@@ -238,7 +254,11 @@ public class Game {
      * @throws IllegalStateException if no question is waiting for an answer
      */
     public void answerQuestion(int answer) {
-        requirePhase(GamePhase.ANSWERING_QUESTION);
+        state.answerQuestion(this, answer);
+    }
+
+    /** Answering itself; only {@link AnsweringQuestionState} calls it. */
+    void applyAnswer(int answer) {
         int steps = difficulty.getQuestionSteps();
         boolean right = pendingQuestion.isCorrect(answer);
         Integer to = walk(questionPiece, right ? steps : -steps);
@@ -260,7 +280,7 @@ public class Game {
             if (q.isPresent()) {
                 pendingQuestion = q.get();
                 questionPiece = piece;
-                phase = GamePhase.ANSWERING_QUESTION;
+                state = new AnsweringQuestionState();
                 fire(msg + " Question square!");
                 return;
             }
@@ -336,12 +356,12 @@ public class Game {
         if (finishOrder.size() >= players.size() - 1) {
             for (Player x : players) if (!finishOrder.contains(x)) finishOrder.add(x);
             endedAt = LocalDateTime.now();
-            phase = GamePhase.GAME_OVER;
+            state = new GameOverState();
             fire(message + " Game over.");
             return;
         }
         if (lastRoll != null && lastRoll.isSix() && !p.hasFinished()) {
-            phase = GamePhase.WAITING_FOR_ROLL;
+            state = new WaitingForRollState();
             fire(message + " A 6 gives " + p.getName() + " another roll.");
         } else {
             nextTurn(message);
@@ -360,18 +380,7 @@ public class Game {
             }
             if (!finishOrder.contains(p)) break;
         } while (true);
-        phase = GamePhase.WAITING_FOR_ROLL;
+        state = new WaitingForRollState();
         fire(message + " " + getCurrentPlayer().getName() + "'s turn.");
-    }
-
-    private void requirePhase(GamePhase expected) {
-        if (phase == expected) return;
-        throw new IllegalStateException(switch (phase) {
-            case WAITING_FOR_ROLL -> getCurrentPlayer().getName() + " has to roll the dice first.";
-            case CHOOSING_PIECE -> getCurrentPlayer().getName() + " has to choose a piece to move first.";
-            case NO_MOVE -> getCurrentPlayer().getName() + " cannot move. Click Next player to go on.";
-            case ANSWERING_QUESTION -> "Answer the question first.";
-            case GAME_OVER -> "The game is over. Start a new game from the menu.";
-        });
     }
 }
