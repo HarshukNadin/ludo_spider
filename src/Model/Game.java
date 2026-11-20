@@ -21,6 +21,8 @@ public class Game {
     private final List<Player> players;
     private final Board board;
     private final Dice dice;
+    /** How this level rolls: Normal, Boost or UltraBoost dice (Strategy pattern). */
+    private final DiceStrategy diceStrategy;
     private final QuestionBank questionBank;
     private final Random random;
     private final List<GameListener> listeners = new ArrayList<>();
@@ -53,6 +55,7 @@ public class Game {
         this.random = random;
         this.board = new Board(difficulty, random);
         this.dice = new Dice(random);
+        this.diceStrategy = Dice.strategyFor(difficulty);
         this.questionBank = questionBank;
         if (questionBank != null) questionBank.resetUsed();
     }
@@ -83,6 +86,8 @@ public class Game {
     public Difficulty getDifficulty() { return difficulty; }
     /** @return the players in turn order */
     public List<Player> getPlayers() { return players; }
+    /** @return how this game's level rolls the dice */
+    public DiceStrategy getDiceStrategy() { return diceStrategy; }
     /** @return the board of this game */
     public Board getBoard() { return board; }
     /** @return the player whose turn it is */
@@ -109,7 +114,7 @@ public class Game {
      * @throws IllegalStateException if the game is not waiting for a roll
      */
     public void roll() {
-        roll(dice.roll(difficulty, ultraBoostNext));
+        roll(dice.roll(ultraBoostNext ? new UltraBoostDice() : diceStrategy));
     }
 
     /**
