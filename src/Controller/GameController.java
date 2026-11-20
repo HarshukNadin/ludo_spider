@@ -1,13 +1,11 @@
 package Controller;
 
-import java.util.List;
 import javax.swing.SwingUtilities;
 
 import Model.Game;
 import Model.GameEvent;
 import Model.GameHistory;
 import Model.HistoryRecorder;
-import Model.Player;
 import View.GameView;
 
 /** Turns button clicks into Model calls, and redraws the View when the Model changes. */
@@ -68,13 +66,8 @@ public class GameController {
         }
     }
 
+    /** The game has ended: the recorder has already saved it, so show the end screen (FR-5.03). */
     private void finish() {
-        List<String> places = game.getFinishOrder().stream().map(Player::getName).toList();
-        StringBuilder sb = new StringBuilder("Final ranking:\n");
-        for (int i = 0; i < places.size(); i++) sb.append(i + 1).append(". ").append(places.get(i)).append('\n');
-        sb.append("Game time: ").append(GameHistory.formatDuration(game.getDuration()));
-        if (recorder.getError() != null) sb.append("\n\n").append(recorder.getError());
-        view.showMessage(sb.toString());
-        app.showHistory();
+        app.showEnd(game, recorder.getSaved(), recorder.getError());
     }
 }

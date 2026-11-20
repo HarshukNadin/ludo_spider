@@ -6,7 +6,9 @@ import javax.swing.JOptionPane;
 
 import Model.Game;
 import Model.GameHistory;
+import Model.GameRecord;
 import Model.QuestionBank;
+import View.EndView;
 import View.GameView;
 import View.HistoryView;
 import View.MainFrame;
@@ -16,7 +18,7 @@ import View.SetupView;
 
 /** Creates the screens and moves between them. Owns the shared data (question bank and history). */
 public class AppController {
-    public static final String MENU = "menu", SETUP = "setup", GAME = "game", HISTORY = "history", RULES = "rules";
+    public static final String MENU = "menu", SETUP = "setup", GAME = "game", HISTORY = "history", RULES = "rules", END = "end";
 
     private final MainFrame frame = new MainFrame();
     private final MainMenuView menu;
@@ -25,6 +27,7 @@ public class AppController {
     private final SetupController setupController;
     private final GameController gameController;
     private final HistoryController historyController;
+    private final EndView endView;
 
     /**
      * Loads the question bank, builds every screen with its controller and wires the menu.
@@ -46,11 +49,13 @@ public class AppController {
         GameView gameView = new GameView();
         HistoryView historyView = new HistoryView();
         RulesView rulesView = new RulesView();
+        endView = new EndView();
         frame.addScreen(MENU, menu);
         frame.addScreen(SETUP, setupView);
         frame.addScreen(GAME, gameView);
         frame.addScreen(HISTORY, historyView);
         frame.addScreen(RULES, rulesView);
+        frame.addScreen(END, endView);
 
         setupController = new SetupController(this, setupView);
         gameController = new GameController(this, gameView, history);
@@ -60,6 +65,9 @@ public class AppController {
         menu.onHistory(e -> showHistory());
         menu.onRules(e -> frame.showScreen(RULES));
         rulesView.onBack(e -> showMenu());
+        endView.onPlayAgain(e -> showSetup());
+        endView.onHistory(e -> showHistory());
+        endView.onMenu(e -> showMenu());
         menu.onQuestions(e -> JOptionPane.showMessageDialog(frame,
                 "Question management needs the administrator login, which comes in Iteration 3.",
                 "Question management", JOptionPane.INFORMATION_MESSAGE));
@@ -87,4 +95,13 @@ public class AppController {
      * @param game the new game
      */
     public void startGame(Game game) { gameController.open(game); frame.showScreen(GAME); }
+
+    /**
+     * Shows the end screen of a finished game (FR-5.03).
+     *
+     * @param game   the finished game
+     * @param record its history record, or null if it was not saved
+     * @param error  why it was not saved, or null
+     */
+    public void showEnd(Game game, GameRecord record, String error) { endView.show(game, record, error); frame.showScreen(END); }
 }
