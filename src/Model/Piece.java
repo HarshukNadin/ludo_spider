@@ -27,7 +27,7 @@ public class Piece {
 
     /**
      * @return steps from the start square along this color's route, or {@link #IN_CASTLE}.
-     *         0 is the start square and {@link Board#FINAL_INDEX} is the Final Home.
+     *         0 is the start square and {@link Player#getFinalIndex()} is the Final Home.
      */
     public int getProgress() { return progress; }
     void setProgress(int progress) { this.progress = progress; }
@@ -36,11 +36,29 @@ public class Piece {
     /** @return where the piece is: castle, shared track, home path or finished */
     public PieceState getState() {
         if (progress == IN_CASTLE) return PieceState.IN_CASTLE;
-        if (progress == Board.FINAL_INDEX) return PieceState.FINISHED;
-        if (progress >= Board.TRACK_LENGTH - 1) return PieceState.IN_HOME_PATH;
+        if (progress == owner.getFinalIndex()) return PieceState.FINISHED;
+        if (progress >= owner.getHomeStart()) return PieceState.IN_HOME_PATH;
         return PieceState.ON_TRACK;
     }
 
-    /** @return the index on the shared track, or -1 when in the castle, home path or finished */
-    public int getTrackIndex() { return Board.toTrackIndex(owner.getColor(), progress); }
+    /** @return the shared square under the piece, or null in the castle, home path or Final Home */
+    public Square getSquare() {
+        Board board = owner.getBoard();
+        if (board == null) {
+            int idx = Board.toTrackIndex(owner.getColor(), progress);
+            return idx < 0 ? null : new Square(idx, SquareType.NORMAL);
+        }
+        return board.squareAt(owner.getColor(), progress);
+    }
+
+    /** @return the index on the standard track, or -1 when the piece is not on it */
+    public int getTrackIndex() {
+        Square s = getSquare();
+        return s == null || s.getRoute() != Route.STANDARD ? -1 : s.getIndex();
+    }
+
+    /** @return the place on the home path, 0 to 5 where 5 is the Final Home, or -1 when the piece is not there */
+    public int getHomeStep() {
+        return getState() == PieceState.IN_HOME_PATH || getState() == PieceState.FINISHED ? progress - owner.getHomeStart() : -1;
+    }
 }

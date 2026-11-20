@@ -18,8 +18,9 @@ class MoveTest {
         green = new Player("Nadin", PlayerColor.GREEN);
         game = new Game(Difficulty.MEDIUM, List.of(red, green), null, new Random(5));
         // Plain squares only, so no question or surprise changes where a piece ends up.
-        for (Square s : game.getBoard().getTrack())
-            if (s.getType() != SquareType.START && s.getType() != SquareType.ARROW) s.setType(SquareType.NORMAL);
+        for (Route r : game.getBoard().getRoutes())
+            for (Square s : r.getSquares())
+                if (s.getType() != SquareType.START && s.getType() != SquareType.ARROW) s.setType(SquareType.NORMAL);
     }
 
     // ---------- Leaving the castle (FR-3.04) ----------
@@ -36,7 +37,9 @@ class MoveTest {
         game.roll(new DiceResult(6, 3));
         game.move(red.getPiece(1));
         assertEquals(0, red.getPiece(1).getProgress(), "the Boost die is not used when leaving the castle");
-        assertEquals(PlayerColor.RED.getStartSquare(), red.getPiece(1).getTrackIndex());
+        Square start = red.getPiece(1).getSquare();
+        assertEquals(SquareType.START, start.getType());
+        assertEquals(Route.RING_64, start.getRoute(), "on Medium the start square is on the outer route");
     }
 
     @Test
@@ -57,30 +60,32 @@ class MoveTest {
 
     @Test
     void homePathPieceMovesByTheNormalDieOnly() {
-        red.getPiece(1).setProgress(52);
-        red.getPiece(2).setProgress(40);
+        int home = red.getHomeStart();
+        red.getPiece(1).setProgress(home + 1);
+        red.getPiece(2).setProgress(home - 12);
         game.roll(new DiceResult(2, 3));
-        assertEquals(54, game.targetOf(red.getPiece(1)), "home path: 2, not 6 (CR-01)");
-        assertEquals(46, game.targetOf(red.getPiece(2)), "shared track: 2 x 3");
+        assertEquals(home + 3, game.targetOf(red.getPiece(1)), "home path: 2, not 6 (CR-01)");
+        assertEquals(home - 6, game.targetOf(red.getPiece(2)), "shared track: 2 x 3");
         game.move(red.getPiece(1));
-        assertEquals(54, red.getPiece(1).getProgress());
-        assertEquals(40, red.getPiece(2).getProgress(), "the other piece stays");
+        assertEquals(home + 3, red.getPiece(1).getProgress());
+        assertEquals(home - 12, red.getPiece(2).getProgress(), "the other piece stays");
     }
 
     @Test
     void pieceTurnsIntoItsHomePathAfterTheArrow() {
-        red.getPiece(1).setProgress(48);
+        red.getPiece(1).setProgress(red.getHomeStart() - 3);
         game.roll(new DiceResult(2, 2));
         game.move(red.getPiece(1));
         assertEquals(PieceState.IN_HOME_PATH, red.getPiece(1).getState());
-        assertEquals(-1, red.getPiece(1).getTrackIndex(), "it left the shared track instead of going around again");
+        assertNull(red.getPiece(1).getSquare(), "it left the shared track instead of going around again");
     }
 
     // ---------- Going back (CR-02, CR-10) ----------
 
     private void greenBlockAtRedProgress(int redProgress) {
-        int square = Board.toTrackIndex(PlayerColor.RED, redProgress);
-        int gp = Math.floorMod(square - PlayerColor.GREEN.getStartSquare(), Board.TRACK_LENGTH);
+        Square square = game.getBoard().squareAt(PlayerColor.RED, redProgress);
+        int gp = game.getBoard().getPath(PlayerColor.GREEN).indexOf(square);
+        assertTrue(gp >= 0, "green also walks this square");
         green.getPiece(1).setProgress(gp);
         green.getPiece(2).setProgress(gp);
     }

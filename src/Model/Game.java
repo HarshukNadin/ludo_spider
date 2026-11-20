@@ -51,7 +51,8 @@ public class Game {
         this.difficulty = difficulty;
         this.players = List.copyOf(players);
         this.random = random;
-        this.board = new Board(difficulty, random);
+        this.board = difficulty == Difficulty.EASY ? new Board(difficulty, random) : new OuterBoard(difficulty, random);
+        for (Player p : this.players) p.setBoard(board);
         this.dice = new Dice(random);
         this.questionBank = questionBank;
         if (questionBank != null) questionBank.resetUsed();
@@ -161,7 +162,7 @@ public class Game {
             if (state == PieceState.FINISHED || state == PieceState.IN_CASTLE) continue;
             onBoard = true;
             int steps = state == PieceState.IN_HOME_PATH ? lastRoll.normal() : lastRoll.total();
-            if (piece.getProgress() + steps > Board.FINAL_INDEX) overshoot = true;
+            if (piece.getProgress() + steps > piece.getOwner().getFinalIndex()) overshoot = true;
             else blocked = true;
         }
         if (!onBoard) return "You need a 6 to bring a piece out.";
@@ -247,8 +248,8 @@ public class Game {
 
     // ---------- Rules ----------
     private void applySquare(Piece piece, StringBuilder msg) {
-        int idx = piece.getTrackIndex();
-        SquareType type = idx < 0 ? SquareType.NORMAL : board.getSquare(idx).getType();
+        Square square = piece.getSquare();
+        SquareType type = square == null ? SquareType.NORMAL : square.getType();
         if (type == SquareType.QUESTION && questionBank != null) {
             var q = questionBank.randomQuestion(difficulty, random);
             if (q.isPresent()) {
@@ -265,7 +266,7 @@ public class Game {
 
     String applySurprise(Piece piece, Surprise s) {
         switch (s) {
-            case GO_TO_FINAL_HOME -> piece.setProgress(Board.FINAL_INDEX);
+            case GO_TO_FINAL_HOME -> piece.setProgress(piece.getOwner().getFinalIndex());
             case BACK_TO_CASTLE -> piece.sendToCastle();
             case THREE_STEPS_BACK -> { Integer to = walk(piece, -3); if (to != null) piece.setProgress(to); }
             case SKIP_NEXT_TURN -> piece.getOwner().setSkipNextTurn(true);
@@ -286,7 +287,7 @@ public class Game {
         int pos = piece.getProgress(), dir = Integer.signum(steps);
         for (int i = 0; i < Math.abs(steps); i++) {
             int next = pos + dir;
-            if (next > Board.FINAL_INDEX) return dir > 0 ? null : pos;
+            if (next > piece.getOwner().getFinalIndex()) return dir > 0 ? null : pos;
             if (next < 0) return pos;
             if (blockedByOpponent(piece.getOwner(), next)) return pos == piece.getProgress() ? null : pos;
             pos = next;
@@ -295,25 +296,25 @@ public class Game {
     }
 
     private boolean blockedByOpponent(Player mover, int progress) {
-        int idx = Board.toTrackIndex(mover.getColor(), progress);
-        if (idx < 0) return false;
+        Square square = board.squareAt(mover.getColor(), progress);
+        if (square == null) return false;
         for (Player other : players) {
             if (other == mover) continue;
-            if (piecesAt(other, idx).size() >= 2) return true;
+            if (piecesAt(other, square).size() >= 2) return true;
         }
         return false;
     }
 
-    private List<Piece> piecesAt(Player player, int trackIndex) {
-        return player.getPieces().stream().filter(x -> x.getTrackIndex() == trackIndex).toList();
+    private List<Piece> piecesAt(Player player, Square square) {
+        return player.getPieces().stream().filter(x -> x.getSquare() == square).toList();
     }
 
     private void captureAt(Piece piece, StringBuilder msg) {
-        int idx = piece.getTrackIndex();
-        if (idx < 0 || board.getSquare(idx).getType().isSafe()) return;
+        Square square = piece.getSquare();
+        if (square == null || square.getType().isSafe()) return;
         for (Player other : players) {
             if (other == piece.getOwner()) continue;
-            List<Piece> there = piecesAt(other, idx);
+            List<Piece> there = piecesAt(other, square);
             if (there.size() == 1) {
                 there.get(0).sendToCastle();
                 msg.append(" Captured ").append(other.getName()).append("'s piece!");

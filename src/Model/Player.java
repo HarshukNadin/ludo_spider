@@ -13,6 +13,8 @@ public class Player {
     private final PlayerColor color;
     private final List<Piece> pieces = new ArrayList<>();
     private boolean skipNextTurn;
+    /** The board of the game this player is in; null before a game is set up, which means the Easy route. */
+    private Board board;
 
     /**
      * Creates a player with four pieces, all in the castle (FR-1.06).
@@ -48,6 +50,16 @@ public class Player {
     public boolean hasFinished() {
         return pieces.stream().allMatch(p -> p.getState() == PieceState.FINISHED);
     }
+
+    /** @return the board this player's pieces walk on, or null before the game is set up */
+    public Board getBoard() { return board; }
+    void setBoard(Board board) { this.board = board; }
+
+    /** @return the progress where this player's home path starts (51 on the Easy board) */
+    public int getHomeStart() { return board == null ? Board.TRACK_LENGTH - 1 : board.getHomeStart(); }
+
+    /** @return the progress of this player's Final Home (56 on the Easy board) */
+    public int getFinalIndex() { return getHomeStart() + Board.HOME_PATH_LENGTH - 1; }
 
     /** @return true if a Surprise square made this player lose the next turn */
     public boolean isSkipNextTurn() { return skipNextTurn; }
